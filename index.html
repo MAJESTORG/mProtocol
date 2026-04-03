@@ -541,7 +541,10 @@
     function connectSocket() {
         if (!socket) {
             updateStatusUI('waiting');
-            socket = io(SIGNALING_SERVER, { transports: ['websocket', 'polling'] });
+            socket = io(SIGNALING_SERVER, {
+    path: "/socket.io/",
+    transports: ["websocket"],
+});
             
             socket.on('connect_error', () => {
                 sysLog("Ошибка сервера сигналинга. Проверьте Render.");
@@ -601,7 +604,7 @@
         const btn = document.getElementById('btn-join');
 
         if (code.length !== 6) {
-            input.style.borderColor = var('--danger');
+            input.style.borderColor = 'var(--danger)';;
             setTimeout(() => input.style.borderColor = '', 1000);
             return;
         }
