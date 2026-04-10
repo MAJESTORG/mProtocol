@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>mProtocol | Private P2P Web-Messenger</title>
+    <title>mProtocol</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
@@ -18,7 +18,6 @@
             --text-main: #f2f2f2;
             --text-muted: #8a8a8e;
             --accent: #ffffff;
-            --accent-glow: rgba(255, 255, 255, 0.2);
             --danger: #ff453a;
             --success: #32d74b;
             --warning: #ffd60a;
@@ -47,7 +46,7 @@
             position: relative;
         }
 
-        /* Анимированный фон (эффект свечения под стеклом) */
+        /* Анимированный фон */
         .ambient-bg {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -62,45 +61,29 @@
             opacity: 0.4;
             animation: float 20s infinite ease-in-out alternate;
         }
-        .blob-1 {
-            width: 400px; height: 400px;
-            background: rgba(255, 255, 255, 0.05);
-            top: -100px; left: -100px;
-        }
-        .blob-2 {
-            width: 500px; height: 500px;
-            background: rgba(255, 255, 255, 0.03);
-            bottom: -200px; right: -100px;
-            animation-delay: -10s;
-        }
+        .blob-1 { width: 400px; height: 400px; background: rgba(255, 255, 255, 0.05); top: -100px; left: -100px; }
+        .blob-2 { width: 500px; height: 500px; background: rgba(255, 255, 255, 0.03); bottom: -200px; right: -100px; animation-delay: -10s; }
 
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(30px, 50px) scale(1.1); }
-        }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
 
-        /* Главный контейнер (Жидкое стекло) */
+        /* Главный контейнер - ИЗМЕНЕНО: Настоящий фуллскрин на ПК */
         .app-container {
-            width: 100%;
-            max-width: 480px;
-            height: 90vh;
-            max-height: 850px;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             background: var(--glass-bg);
             backdrop-filter: blur(40px) saturate(150%);
             -webkit-backdrop-filter: blur(40px) saturate(150%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
             display: flex;
             flex-direction: column;
             position: relative;
             z-index: 10;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
             overflow: hidden;
         }
 
         /* Шапка */
         .header {
-            padding: 20px 24px;
+            padding: 16px 24px; /* Чуть компактнее */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -108,84 +91,56 @@
             background: rgba(0, 0, 0, 0.2);
         }
 
-        .brand-title {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .brand-title h1 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .brand-title { display: flex; flex-direction: column; gap: 2px; }
+        .brand-title h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
 
         .ping-indicator {
-            font-family: var(--font-mono);
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s;
         }
         .ping-indicator.visible { opacity: 1; }
 
+        .header-actions { display: flex; align-items: center; gap: 16px; }
+
+        /* ИЗМЕНЕНО: Кнопка звука */
+        .icon-btn {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: color 0.2s, transform 0.2s; padding: 4px; border-radius: 50%;
+        }
+        .icon-btn:hover { color: var(--accent); transform: scale(1.1); background: rgba(255,255,255,0.05); }
+
         .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0,0,0,0.4);
-            padding: 6px 12px;
-            border-radius: 30px;
-            border: 1px solid var(--glass-border);
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            letter-spacing: 0.05em;
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.4); padding: 6px 14px;
+            border-radius: 30px; border: 1px solid var(--glass-border);
+            font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em;
+            min-width: 100px;
         }
 
-        .status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--danger);
-            box-shadow: 0 0 8px var(--danger);
-            transition: all 0.3s;
-        }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 8px var(--danger); transition: all 0.3s; }
         .status-dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); }
         .status-dot.waiting { background: var(--warning); box-shadow: 0 0 10px var(--warning); animation: pulse 1.5s infinite; }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
+        /* ИЗМЕНЕНО: Контейнер для статуса и надписи "Печатает" */
+        .status-text-group { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 14px; }
+        #status-label { transition: opacity 0.2s; }
+        
+        .typing-label {
+            font-size: 0.55rem; color: var(--accent); opacity: 0;
+            height: 0; overflow: hidden; transition: all 0.2s;
+            text-transform: lowercase; font-style: italic;
         }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         /* Экраны */
         .screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 32px 24px;
-            overflow-y: auto;
-            position: absolute;
-            top: 70px; left: 0; right: 0; bottom: 0;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(10px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            flex: 1; display: flex; flex-direction: column; padding: 32px 24px; overflow-y: auto;
+            position: absolute; top: 70px; left: 0; right: 0; bottom: 0;
+            opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        
-        .screen.active {
-            opacity: 1;
-            pointer-events: all;
-            transform: translateY(0);
-            position: relative;
-            top: 0;
-        }
+        .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); position: relative; top: 0; }
 
         /* Типографика и элементы */
         .title-block { text-align: center; margin-bottom: 32px; }
@@ -193,64 +148,29 @@
         .title-block p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
 
         .btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s ease;
-            margin-bottom: 12px;
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border);
+            color: var(--text-main); padding: 16px; border-radius: 14px;
+            font-size: 1rem; font-weight: 500; cursor: pointer;
+            width: 100%; max-width: 400px; margin: 0 auto 12px auto;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s ease; backdrop-filter: blur(10px);
         }
-
         .btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--glass-highlight); transform: translateY(-1px); }
         .btn:active { transform: translateY(1px); }
-        
         .btn-primary { background: var(--text-main); color: var(--bg-dark); border: none; }
         .btn-primary:hover { background: #e0e0e0; box-shadow: 0 4px 15px rgba(255,255,255,0.15); }
         .btn-primary:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
 
         .code-display-box {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; text-align: center;
+            margin: 0 auto 24px auto; width: 100%; max-width: 400px;
         }
-        
-        .code-display {
-            font-family: var(--font-mono);
-            font-size: 3rem;
-            font-weight: 500;
-            letter-spacing: 12px;
-            margin-right: -12px; /* Компенсация letter-spacing */
-            color: var(--accent);
-            text-shadow: 0 0 20px rgba(255,255,255,0.2);
-        }
+        .code-display { font-family: var(--font-mono); font-size: 3rem; font-weight: 500; letter-spacing: 12px; margin-right: -12px; color: var(--accent); text-shadow: 0 0 20px rgba(255,255,255,0.2); }
 
         .input-code {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--glass-border);
-            color: var(--accent);
-            padding: 20px;
-            border-radius: 14px;
-            font-family: var(--font-mono);
-            font-size: 2rem;
-            text-align: center;
-            letter-spacing: 8px;
-            outline: none;
-            width: 100%;
-            transition: border-color 0.3s;
-            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); color: var(--accent); padding: 20px; border-radius: 14px;
+            font-family: var(--font-mono); font-size: 2rem; text-align: center; letter-spacing: 8px; outline: none;
+            width: 100%; max-width: 400px; margin: 0 auto 24px auto; display: block; transition: border-color 0.3s;
         }
         .input-code:focus { border-color: var(--glass-highlight); background: rgba(0, 0, 0, 0.5); }
         .input-code::placeholder { color: rgba(255,255,255,0.1); }
@@ -259,139 +179,73 @@
         .chat-container { padding: 0 !important; }
         
         #messages {
-            flex: 1;
-            padding: 24px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            scroll-behavior: smooth;
+            flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
+            width: 100%; max-width: 1000px; margin: 0 auto; /* ИЗМЕНЕНО: Ограничение ширины самого чата на огромных экранах */
         }
 
-        .msg-wrapper {
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+        .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .msg-wrapper.mine { align-self: flex-end; align-items: flex-end; }
         .msg-wrapper.theirs { align-self: flex-start; align-items: flex-start; }
 
-        .msg-time {
-            font-family: var(--font-mono);
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            opacity: 0.7;
-        }
+        .msg-time { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); margin-bottom: 4px; opacity: 0.7; }
 
-        .msg {
-            padding: 12px 18px;
-            border-radius: 18px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            word-wrap: break-word;
-            position: relative;
-        }
-
-        .mine .msg {
-            background: var(--text-main);
-            color: var(--bg-dark);
-            border-bottom-right-radius: 4px;
-        }
-
-        .theirs .msg {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-bottom-left-radius: 4px;
-            backdrop-filter: blur(10px);
-        }
+        .msg { padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; position: relative; }
+        .mine .msg { background: var(--text-main); color: var(--bg-dark); border-bottom-right-radius: 4px; }
+        .theirs .msg { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; backdrop-filter: blur(10px); }
 
         .msg.system {
-            align-self: center;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            padding: 6px 14px;
-            border-radius: 20px;
-            text-align: center;
-            margin: 8px 0;
-            max-width: 90%;
+            align-self: center; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: var(--text-muted);
+            font-family: var(--font-mono); font-size: 0.7rem; padding: 6px 14px; border-radius: 20px; text-align: center; margin: 8px 0; max-width: 90%;
         }
 
+        .chat-input-wrapper { background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+        
         .chat-input-area {
-            padding: 16px 20px;
-            background: rgba(0,0,0,0.2);
-            border-top: 1px solid var(--glass-border);
-            display: flex;
-            gap: 12px;
-            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            padding: 16px 20px 0 20px; display: flex; gap: 12px;
+            width: 100%; max-width: 1000px; margin: 0 auto;
         }
 
         .chat-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            padding: 14px 18px;
-            border-radius: 24px;
-            font-size: 0.95rem;
-            font-family: var(--font-sans);
-            outline: none;
-            transition: all 0.3s;
+            flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 14px 18px; border-radius: 24px; font-size: 0.95rem; font-family: var(--font-sans); outline: none; transition: all 0.3s;
         }
         .chat-input:focus { border-color: var(--glass-highlight); background: rgba(255, 255, 255, 0.08); }
         .chat-input::placeholder { color: var(--text-muted); }
 
         .btn-send {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--text-main);
-            color: var(--bg-dark);
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s, background 0.2s;
+            width: 48px; height: 48px; border-radius: 50%; background: var(--text-main); color: var(--bg-dark); border: none;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; flex-shrink: 0;
         }
         .btn-send:hover { transform: scale(1.05); background: #fff; }
         .btn-send:active { transform: scale(0.95); }
-        .btn-send svg { margin-left: -2px; /* Оптическое выравнивание иконки */ }
+        .btn-send svg { margin-left: -2px; }
 
-        /* Фирменный подвал byMatvey */
+        /* ИЗМЕНЕНО: Обновленный футер со ссылкой на GitHub */
         .brand-footer {
-            text-align: center;
-            padding: 16px;
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-            opacity: 0.6;
-            transition: opacity 0.3s;
+            text-align: center; padding: 16px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);
+            letter-spacing: 0.05em; opacity: 0.6; transition: opacity 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .brand-footer:hover { opacity: 1; }
         .brand-footer span { font-weight: 500; color: var(--text-main); }
+        .brand-footer a {
+            color: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+            background: rgba(255,255,255,0.05); padding: 4px; border-radius: 50%;
+        }
+        .brand-footer a:hover { color: var(--accent); background: rgba(255,255,255,0.1); transform: scale(1.1); }
 
-        /* Утилиты и анимации */
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Кастомный скроллбар */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-        /* Адаптив для телефонов */
         @media (max-width: 600px) {
-            .app-container { border-radius: 0; height: 100dvh; max-height: none; border: none; }
             .header { padding: 16px; }
             .screen { padding: 24px 16px; }
-            .input-code, .chat-input { font-size: 16px; /* Предотвращает зум на iOS */ }
+            .input-code, .chat-input { font-size: 16px; }
             .code-display { font-size: 2.5rem; letter-spacing: 8px; }
+            .msg-wrapper { max-width: 90%; }
         }
     </style>
 </head>
@@ -414,9 +268,19 @@
                 <span id="ping-value">-- ms</span>
             </div>
         </div>
-        <div class="status-badge">
-            <div class="status-dot" id="status-indicator"></div>
-            <span id="status-label">OFFLINE</span>
+        <div class="header-actions">
+            <button id="mute-btn" class="icon-btn" onclick="toggleMute()" title="Уведомления">
+                <svg id="icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <svg id="icon-sound-off" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="1" x2="1" y2="23"></line><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </button>
+
+            <div class="status-badge">
+                <div class="status-dot" id="status-indicator"></div>
+                <div class="status-text-group">
+                    <span id="status-label">OFFLINE</span>
+                    <span id="typing-label" class="typing-label">печатает...</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -462,64 +326,109 @@
         <div id="messages">
             <div class="msg system">Соединение установлено<br>E2EE канал активен</div>
         </div>
-        <div class="chat-input-area">
-            <input type="text" id="msg-input" class="chat-input" placeholder="Передача данных..." autocomplete="off">
-            <button class="btn-send" onclick="sendMessage()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
+        <div class="chat-input-wrapper">
+            <div class="chat-input-area">
+                <input type="text" id="msg-input" class="chat-input" placeholder="Передача данных..." autocomplete="off">
+                <button class="btn-send" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="brand-footer" id="brand-footer">
+        <a href="https://github.com/MAJESTORG/mProtocol" target="_blank" title="Source code on GitHub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        </a>
         Engineered <span>by Matvey</span>
     </div>
 </div>
 
 <script>
-    // --- КОНФИГУРАЦИЯ СЕТИ ---
     const SIGNALING_SERVER = 'https://mprotocol.onrender.com';
-    
-    // Добавлены TURN-серверы OpenRelay для пробития мобильных сетей
     const rtcConfig = { 
         iceServers: [
             { urls: "stun:stun.l.google.com:19302" },
             { urls: "stun:stun1.l.google.com:19302" },
-            {
-                urls: "turn:openrelay.metered.ca:80",
-                username: "openrelayproject",
-                credential: "openrelayproject"
-            },
-            {
-                urls: "turn:openrelay.metered.ca:443",
-                username: "openrelayproject",
-                credential: "openrelayproject"
-            },
-            {
-                urls: "turn:openrelay.metered.ca:443?transport=tcp",
-                username: "openrelayproject",
-                credential: "openrelayproject"
-            }
+            { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+            { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+            { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
         ] 
     };
 
-    // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
     let socket = null;
     let pc = null;
     let dc = null;
     let currentRoomId = null;
     let isHost = false;
-    
-    // Переменные для пинга
     let pingInterval;
     let isConnected = false;
 
-    // --- ИНТЕРФЕЙСНЫЕ ФУНКЦИИ ---
+    // ИЗМЕНЕНО: Логика звука и Mute
+    let isMuted = false;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function toggleMute() {
+        isMuted = !isMuted;
+        document.getElementById('icon-sound-on').style.display = isMuted ? 'none' : 'block';
+        document.getElementById('icon-sound-off').style.display = isMuted ? 'block' : 'none';
+        
+        // Воспроизводим тестовый звук при включении (если нужно)
+        if (!isMuted) {
+            playNotificationSound();
+        }
+    }
+
+    function playNotificationSound() {
+        if (isMuted) return; // Проверка статуса
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            // "Телеграмный/iOS" звук: короткий, восходящий пик
+            oscillator.type = 'sine'; 
+            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); 
+            oscillator.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.05);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); // Очень короткое затухание
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.15);
+        } catch(e) {
+            console.log("Audio fail:", e);
+        }
+    }
+
+    // ИЗМЕНЕНО: Логика статуса "Печатает..."
+    let typingTimeout = null;
+    let lastTypingTime = 0;
+
+    function showTypingIndicator() {
+        const typingLabel = document.getElementById('typing-label');
+        const statusLabel = document.getElementById('status-label');
+        
+        statusLabel.style.display = 'none'; // Прячем CONNECTED
+        typingLabel.style.height = '14px';
+        typingLabel.style.opacity = '1';
+        
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            typingLabel.style.height = '0';
+            typingLabel.style.opacity = '0';
+            setTimeout(() => { statusLabel.style.display = 'block'; }, 200); // Возвращаем статус
+        }, 2500); // Исчезает через 2.5 сек
+    }
+
     function navTo(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
-        
-        // Скрываем футер в чате для экономии места
-        document.getElementById('brand-footer').style.display = (screenId === 'screen-chat') ? 'none' : 'block';
+        document.getElementById('brand-footer').style.display = (screenId === 'screen-chat') ? 'none' : 'flex';
     }
 
     function navToJoin() {
@@ -532,40 +441,25 @@
         const label = document.getElementById('status-label');
         const pingUi = document.getElementById('ping-ui');
 
-        dot.className = 'status-dot'; // сброс
+        dot.className = 'status-dot';
         
         switch(state) {
-            case 'offline':
-                label.innerText = 'OFFLINE';
-                pingUi.classList.remove('visible');
-                break;
-            case 'waiting':
-                dot.classList.add('waiting');
-                label.innerText = 'SIGNALING...';
-                break;
-            case 'connected':
-                dot.classList.add('active');
-                label.innerText = 'CONNECTED';
-                pingUi.classList.add('visible');
-                break;
+            case 'offline': label.innerText = 'OFFLINE'; pingUi.classList.remove('visible'); break;
+            case 'waiting': dot.classList.add('waiting'); label.innerText = 'SIGNALING...'; break;
+            case 'connected': dot.classList.add('active'); label.innerText = 'CONNECTED'; pingUi.classList.add('visible'); break;
         }
     }
 
-    // --- ЛОГИКА SIGNALING СЕРВЕРА ---
     function connectSocket() {
         if (!socket) {
             updateStatusUI('waiting');
-            socket = io(SIGNALING_SERVER, {
-                path: "/socket.io/",
-                transports: ["websocket"],
-            });
+            socket = io(SIGNALING_SERVER, { path: "/socket.io/", transports: ["websocket"] });
             
             socket.on('connect_error', () => {
                 sysLog("Ошибка сервера сигналинга. Проверьте Render.");
                 updateStatusUI('offline');
             });
 
-            // Обработка входящих сигналов (SDP и ICE)
             socket.on('signal', async (data) => {
                 if (!pc) return;
                 try {
@@ -579,14 +473,11 @@
                     } else if (data.candidate) {
                         await pc.addIceCandidate(new RTCIceCandidate(data));
                     }
-                } catch (e) {
-                    console.error("WebRTC Signal Error:", e);
-                }
+                } catch (e) { console.error("WebRTC Signal Error:", e); }
             });
         }
     }
 
-    // --- ЛОГИКА ХОСТА ---
     function initHostSession() {
         connectSocket();
         isHost = true;
@@ -594,15 +485,12 @@
         document.getElementById('room-code-display').innerText = '...';
 
         socket.emit('create-room');
-        
-        // Сервер вернул созданный 6-значный код
         socket.on('room-created', (id) => {
             currentRoomId = id;
             document.getElementById('room-code-display').innerText = id;
             setupWebRTC(true);
         });
 
-        // Гость ввел код и зашел
         socket.on('guest-joined', async () => {
             sysLog("Узел обнаружен. Обмен ключами...");
             const offer = await pc.createOffer();
@@ -611,38 +499,22 @@
         });
     }
 
-    // --- ЛОГИКА ГОСТЯ ---
     function joinSession() {
         const input = document.getElementById('join-code-input');
         const code = input.value.trim();
         const btn = document.getElementById('btn-join');
 
-        if (code.length !== 6) {
-            input.style.borderColor = 'var(--danger)';
-            setTimeout(() => input.style.borderColor = '', 1000);
-            return;
-        }
+        if (code.length !== 6) { input.style.borderColor = 'var(--danger)'; setTimeout(() => input.style.borderColor = '', 1000); return; }
 
-        btn.disabled = true;
-        btn.innerText = "Подключение...";
-        connectSocket();
-        isHost = false;
-        currentRoomId = code;
-
+        btn.disabled = true; btn.innerText = "Подключение...";
+        connectSocket(); isHost = false; currentRoomId = code;
         socket.emit('join-room', code);
 
-        socket.on('join-success', () => {
-            setupWebRTC(false);
-            sysLog("Код принят. Установка P2P соединения...");
-        });
-
+        socket.on('join-success', () => { setupWebRTC(false); sysLog("Код принят. Установка P2P соединения..."); });
         socket.on('error', (msg) => {
             alert(msg || "Неверный код или сессия закрыта");
-            btn.disabled = false;
-            btn.innerText = "Установить связь";
-            socket.disconnect();
-            socket = null;
-            updateStatusUI('offline');
+            btn.disabled = false; btn.innerText = "Установить связь";
+            socket.disconnect(); socket = null; updateStatusUI('offline');
         });
     }
 
@@ -651,105 +523,58 @@
         if (pc) { pc.close(); pc = null; }
         if (pingInterval) clearInterval(pingInterval);
         
-        currentRoomId = null;
-        isConnected = false;
-        updateStatusUI('offline');
-        navTo('screen-home');
+        currentRoomId = null; isConnected = false; updateStatusUI('offline'); navTo('screen-home');
         document.getElementById('join-code-input').value = '';
-        document.getElementById('btn-join').disabled = false;
-        document.getElementById('btn-join').innerText = "Установить связь";
+        document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
     }
 
-    // --- WEBRTC CORE ---
     function setupWebRTC(isInitiator) {
         pc = new RTCPeerConnection(rtcConfig);
         
-        // Отправка ICE кандидатов через сигналинг
-        pc.onicecandidate = (e) => {
-            if (e.candidate) {
-                socket.emit('signal', { roomId: currentRoomId, data: e.candidate });
-            }
-        };
-
-        // Отслеживание состояния соединения
+        pc.onicecandidate = (e) => { if (e.candidate) socket.emit('signal', { roomId: currentRoomId, data: e.candidate }); };
         pc.oniceconnectionstatechange = () => {
-            if(pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-                handleConnectionSuccess();
-            } else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
-                handleConnectionDrop();
-            }
+            if(pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') handleConnectionSuccess();
+            else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') handleConnectionDrop();
         };
 
-        if (isInitiator) {
-            dc = pc.createDataChannel("mlink_channel", { ordered: true });
-            setupDataChannel();
-        } else {
-            pc.ondatachannel = (e) => {
-                dc = e.channel;
-                setupDataChannel();
-            };
-        }
+        if (isInitiator) { dc = pc.createDataChannel("mlink_channel", { ordered: true }); setupDataChannel(); }
+        else { pc.ondatachannel = (e) => { dc = e.channel; setupDataChannel(); }; }
     }
 
     function setupDataChannel() {
-        dc.onopen = () => {
-            if(!isConnected) handleConnectionSuccess();
-        };
-        
-        dc.onclose = () => {
-            handleConnectionDrop();
-        };
+        dc.onopen = () => { if(!isConnected) handleConnectionSuccess(); };
+        dc.onclose = () => { handleConnectionDrop(); };
 
         dc.onmessage = (e) => {
-            // Обработка системного пинга
-            if (e.data.startsWith('__PING__')) {
-                dc.send(e.data.replace('__PING__', '__PONG__'));
-                return;
-            }
+            if (e.data.startsWith('__PING__')) { dc.send(e.data.replace('__PING__', '__PONG__')); return; }
             if (e.data.startsWith('__PONG__')) {
                 const timestamp = parseInt(e.data.split(':')[1]);
-                const latency = Date.now() - timestamp;
-                document.getElementById('ping-value').innerText = `${latency} ms`;
+                document.getElementById('ping-value').innerText = `${Date.now() - timestamp} ms`;
                 return;
             }
             
-            // Обычное сообщение
+            // ИЗМЕНЕНО: Перехват технического пакета "Печатает"
+            if (e.data === '__TYPING__') {
+                showTypingIndicator();
+                return;
+            }
+            
             renderMessage(e.data, 'theirs');
         };
     }
 
     function handleConnectionSuccess() {
-        isConnected = true;
-        updateStatusUI('connected');
-        navTo('screen-chat');
-        
-        // Запускаем расчет пинга
-        pingInterval = setInterval(() => {
-            if (dc && dc.readyState === 'open') {
-                dc.send(`__PING__:${Date.now()}`);
-            }
-        }, 2000);
-
-        // Отключаем сигналинг сервер - он больше не нужен
-        if(socket) {
-            socket.disconnect();
-            socket = null;
-            console.log("Signaling Server disconnected. E2EE active.");
-        }
+        isConnected = true; updateStatusUI('connected'); navTo('screen-chat');
+        pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${Date.now()}`); }, 2000);
+        if(socket) { socket.disconnect(); socket = null; }
     }
 
     function handleConnectionDrop() {
-        isConnected = false;
-        clearInterval(pingInterval);
-        updateStatusUI('offline');
+        isConnected = false; clearInterval(pingInterval); updateStatusUI('offline');
         sysLog("Соединение с удаленным узлом разорвано.");
     }
 
-    // --- ЧАТ И UI ---
-    function getTime() {
-        const now = new Date();
-        return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    }
+    function getTime() { const now = new Date(); return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`; }
 
     function sendMessage() {
         const input = document.getElementById('msg-input');
@@ -758,52 +583,49 @@
         if (text && dc && dc.readyState === 'open') {
             dc.send(text);
             renderMessage(text, 'mine');
-            input.value = '';
-            input.focus();
+            input.value = ''; input.focus();
         }
     }
 
     function renderMessage(text, sender) {
         const box = document.getElementById('messages');
+        const wrapperDiv = document.createElement('div'); wrapperDiv.className = `msg-wrapper ${sender}`;
+        const msgDiv = document.createElement('div'); msgDiv.className = `msg`; msgDiv.innerText = text;
+        const metaDiv = document.createElement('div'); metaDiv.className = 'msg-time'; metaDiv.innerText = getTime();
         
-        const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = `msg-wrapper ${sender}`;
-        
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `msg`;
-        msgDiv.innerText = text;
-        
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'msg-time';
-        metaDiv.innerText = getTime();
-        
-        wrapperDiv.appendChild(msgDiv);
-        wrapperDiv.appendChild(metaDiv);
-        box.appendChild(wrapperDiv);
-        
+        wrapperDiv.appendChild(msgDiv); wrapperDiv.appendChild(metaDiv); box.appendChild(wrapperDiv);
         box.scrollTop = box.scrollHeight;
+
+        if (sender === 'theirs') {
+            playNotificationSound();
+            // Если пришло сообщение, сразу гасим "Печатает"
+            document.getElementById('typing-label').style.height = '0';
+            document.getElementById('typing-label').style.opacity = '0';
+            document.getElementById('status-label').style.display = 'block';
+        }
     }
 
     function sysLog(text) {
         const box = document.getElementById('messages');
-        const sysDiv = document.createElement('div');
-        sysDiv.className = `msg system`;
-        sysDiv.innerText = text;
-        if(box) {
-            box.appendChild(sysDiv);
-            box.scrollTop = box.scrollHeight;
-        }
+        const sysDiv = document.createElement('div'); sysDiv.className = `msg system`; sysDiv.innerText = text;
+        if(box) { box.appendChild(sysDiv); box.scrollTop = box.scrollHeight; }
     }
 
-    // Обработка Enter в поле ввода
-    document.getElementById('msg-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') sendMessage();
+    document.getElementById('msg-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
+    document.getElementById('join-code-input').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
+
+    // ИЗМЕНЕНО: Отслеживание ввода текста для статуса "Печатает"
+    document.getElementById('msg-input').addEventListener('input', () => {
+        if (dc && dc.readyState === 'open') {
+            const now = Date.now();
+            // Отправляем пакет не чаще 1 раза в 1.5 секунды, чтобы не спамить канал
+            if (now - lastTypingTime > 1500) {
+                dc.send('__TYPING__');
+                lastTypingTime = now;
+            }
+        }
     });
 
-    // Ограничение ввода кода только цифрами
-    document.getElementById('join-code-input').addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
 </script>
 </body>
 </html>
