@@ -477,14 +477,28 @@
 
 <script>
     // --- КОНФИГУРАЦИЯ СЕТИ ---
-    // Укажи здесь ссылку на свой деплой в Render
     const SIGNALING_SERVER = 'https://mprotocol.onrender.com';
     
-    // STUN сервера (Google) для пробития NAT
+    // Добавлены TURN-серверы OpenRelay для пробития мобильных сетей
     const rtcConfig = { 
         iceServers: [
             { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" }
+            { urls: "stun:stun1.l.google.com:19302" },
+            {
+                urls: "turn:openrelay.metered.ca:80",
+                username: "openrelayproject",
+                credential: "openrelayproject"
+            },
+            {
+                urls: "turn:openrelay.metered.ca:443",
+                username: "openrelayproject",
+                credential: "openrelayproject"
+            },
+            {
+                urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                username: "openrelayproject",
+                credential: "openrelayproject"
+            }
         ] 
     };
 
@@ -542,9 +556,9 @@
         if (!socket) {
             updateStatusUI('waiting');
             socket = io(SIGNALING_SERVER, {
-    path: "/socket.io/",
-    transports: ["websocket"],
-});
+                path: "/socket.io/",
+                transports: ["websocket"],
+            });
             
             socket.on('connect_error', () => {
                 sysLog("Ошибка сервера сигналинга. Проверьте Render.");
@@ -604,7 +618,7 @@
         const btn = document.getElementById('btn-join');
 
         if (code.length !== 6) {
-            input.style.borderColor = 'var(--danger)';;
+            input.style.borderColor = 'var(--danger)';
             setTimeout(() => input.style.borderColor = '', 1000);
             return;
         }
