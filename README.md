@@ -18,7 +18,7 @@
     </td>
     <td width="40%" rowspan="2" align="center" valign="middle">
       <img 
-        src="https://github.com/user-attachments/assets/89783bd5-5bcd-4b9f-8761-8700429e5645"
+        src="https://github.com/user-attachments/assets/ee769f32-011c-4597-b4d6-527e735aeef3"
         alt="mProtocol UI"
         style="max-width: 100%; height: auto; width: 340px; border-radius: 8px;" />
     </td>
