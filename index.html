@@ -150,7 +150,7 @@
         .msg-wrapper.theirs { align-self: flex-start; align-items: flex-start; }
 
         .msg-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px; opacity: 0.8; }
-        .msg-nick { font-weight: 700; color: var(--accent); letter-spacing: 0.02em; } /* Visual accent on nickname */
+        .msg-nick { font-weight: 700; color: var(--accent); letter-spacing: 0.02em; } 
 
         .msg { padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; position: relative; }
         .mine .msg { background: var(--msg-mine-bg); color: var(--msg-mine-text); border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -312,19 +312,30 @@
 </div>
 
 <script>
-    /** @type {string} */
+   /** @type {string} */
     const SIGNALING_SERVER = 'https://mprotocol.onrender.com';
     
     /** @type {RTCConfiguration} */
-    const rtcConfig = { 
+    let rtcConfig = { 
         iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" },
-            { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-            { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
-            { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+            { urls: "stun:stun.relay.metered.ca:80" } // Базовый фоллбэк
         ] 
     };
+
+    // ФУНКЦИЯ ДЛЯ ЗАПРОСА КЛЮЧЕЙ С БЭКЕНДА
+    async function fetchIceConfig() {
+        try {
+            const response = await fetch(`${SIGNALING_SERVER}/ice-config`);
+            if (response.ok) {
+                rtcConfig = await response.json();
+                console.log("mProtocol: Безопасная ICE-конфигурация получена.");
+            } else {
+                console.warn("mProtocol: Ошибка сервера при запросе TURN. Используется fallback STUN.");
+            }
+        } catch (err) {
+            console.error("mProtocol: Ошибка сети при запросе ICE. Используется fallback STUN.", err);
+        }
+    }
 
     /** @type {SocketIOClient.Socket|null} */ let socket = null;
     /** @type {RTCPeerConnection|null} */ let pc = null;
@@ -490,11 +501,16 @@
         }
     }
 
-    function initHostSession() {
+    // ОБНОВЛЕННАЯ ФУНКЦИЯ: Теперь она асинхронная и ждет ответа от сервера
+    async function initHostSession() {
         captureNickname();
+        navTo('screen-host');
+        document.getElementById('room-code-display').innerText = 'Загрузка...';
+
+        await fetchIceConfig(); // Получаем ключи перед подключением
+
         connectSocket();
         isHost = true;
-        navTo('screen-host');
         document.getElementById('room-code-display').innerText = '...';
 
         socket.emit('create-room');
@@ -509,14 +525,19 @@
         });
     }
 
-    function joinSession() {
+    // ОБНОВЛЕННАЯ ФУНКЦИЯ: Теперь она асинхронная и ждет ответа от сервера
+    async function joinSession() {
         const input = document.getElementById('join-code-input');
         const code = input.value.trim();
         const btn = document.getElementById('btn-join');
 
         if (code.length !== 6) { input.style.borderColor = 'var(--danger)'; setTimeout(() => input.style.borderColor = '', 1000); return; }
 
-        btn.disabled = true; btn.innerText = "Подключение...";
+        btn.disabled = true; btn.innerText = "Запрос ключей...";
+        
+        await fetchIceConfig(); // Получаем ключи перед подключением
+        
+        btn.innerText = "Подключение...";
         connectSocket(); isHost = false; currentRoomId = code;
         socket.emit('join-room', code);
 
