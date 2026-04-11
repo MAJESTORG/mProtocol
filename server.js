@@ -15,6 +15,31 @@ const io = new Server(server, {
     transports: ['websocket', 'polling']
 });
 
+// ЭНДПОИНТ ДЛЯ БЕЗОПАСНОЙ ICE КОНФИГУРАЦИИ
+// Теперь клиент запрашивает данные отсюда, а сервер берет их из переменных Render
+app.get('/ice-config', (req, res) => {
+    res.json({
+        iceServers: [
+            { urls: "stun:stun.relay.metered.ca:80" },
+            {
+                urls: "turn:openrelay.metered.ca:80",
+                username: process.env.TURN_USER,
+                credential: process.env.TURN_PASS
+            },
+            {
+                urls: "turn:openrelay.metered.ca:443",
+                username: process.env.TURN_USER,
+                credential: process.env.TURN_PASS
+            },
+            {
+                urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                username: process.env.TURN_USER,
+                credential: process.env.TURN_PASS
+            }
+        ]
+    });
+});
+
 const rooms = new Map(); // roomId -> Set(socketId)
 
 io.on('connection', (socket) => {
@@ -64,4 +89,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
