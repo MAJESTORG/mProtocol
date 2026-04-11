@@ -2,15 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>mProtocol</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
     <style>
         :root {
+            /* Dark Theme (Default) */
             --bg-dark: #050505;
             --glass-bg: rgba(20, 20, 22, 0.65);
             --glass-border: rgba(255, 255, 255, 0.08);
@@ -18,238 +18,196 @@
             --text-main: #f2f2f2;
             --text-muted: #8a8a8e;
             --accent: #ffffff;
+            --accent-glow: rgba(255, 255, 255, 0.4);
+            --msg-mine-bg: #ffffff;
+            --msg-mine-text: #050505;
+            --msg-theirs-bg: rgba(255, 255, 255, 0.05);
+            --sys-bg: rgba(0, 0, 0, 0.3);
+            
+            /* Status Colors */
             --danger: #ff453a;
             --success: #32d74b;
             --warning: #ffd60a;
+            --progress-track: rgba(255, 255, 255, 0.1);
             
             --font-sans: 'Inter', -apple-system, sans-serif;
             --font-mono: 'Fira Code', monospace;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
+        [data-theme="light"] {
+            --bg-dark: #e8e8ed;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glass-highlight: rgba(0, 0, 0, 0.2);
+            --text-main: #1d1d1f;
+            --text-muted: #86868b;
+            --accent: #007aff;
+            --accent-glow: rgba(0, 122, 255, 0.3);
+            --msg-mine-bg: #1d1d1f;
+            --msg-mine-text: #ffffff;
+            --msg-theirs-bg: rgba(0, 0, 0, 0.04);
+            --sys-bg: rgba(255, 255, 255, 0.5);
+            --progress-track: rgba(0, 0, 0, 0.1);
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-dark);
-            font-family: var(--font-sans);
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            position: relative;
+            background-color: var(--bg-dark); font-family: var(--font-sans); color: var(--text-main);
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; height: 100dvh; overflow: hidden; position: relative; transition: background-color 0.4s ease;
         }
 
-        /* Анимированный фон */
-        .ambient-bg {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            overflow: hidden;
-            z-index: 0;
-            pointer-events: none;
-        }
-        .ambient-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: float 20s infinite ease-in-out alternate;
-        }
-        .blob-1 { width: 400px; height: 400px; background: rgba(255, 255, 255, 0.05); top: -100px; left: -100px; }
-        .blob-2 { width: 500px; height: 500px; background: rgba(255, 255, 255, 0.03); bottom: -200px; right: -100px; animation-delay: -10s; }
-
+        /* Ambient Background */
+        .ambient-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+        .ambient-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 20s infinite ease-in-out alternate; }
+        [data-theme="dark"] .blob-1 { width: 400px; height: 400px; background: rgba(255, 255, 255, 0.05); top: -100px; left: -100px; }
+        [data-theme="dark"] .blob-2 { width: 500px; height: 500px; background: rgba(255, 255, 255, 0.03); bottom: -200px; right: -100px; animation-delay: -10s; }
+        [data-theme="light"] .blob-1 { width: 400px; height: 400px; background: rgba(0, 0, 0, 0.05); top: -100px; left: -100px; }
+        [data-theme="light"] .blob-2 { width: 500px; height: 500px; background: rgba(0, 0, 0, 0.03); bottom: -200px; right: -100px; animation-delay: -10s; }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, 50px) scale(1.1); } }
 
-        /* Главный контейнер - ИЗМЕНЕНО: Настоящий фуллскрин на ПК */
+        /* App Container */
         .app-container {
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            background: var(--glass-bg);
-            backdrop-filter: blur(40px) saturate(150%);
-            -webkit-backdrop-filter: blur(40px) saturate(150%);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            z-index: 10;
-            overflow: hidden;
+            width: 100vw; height: 100vh; height: 100dvh;
+            background: var(--glass-bg); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%);
+            display: flex; flex-direction: column; position: relative; z-index: 10; overflow: hidden;
+            transition: background 0.4s ease, border-color 0.4s ease;
         }
 
-        /* Шапка */
-        .header {
-            padding: 16px 24px; /* Чуть компактнее */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.2);
+        /* Responsive Breakpoints */
+        @media (min-width: 768px) {
+            .app-container { 
+                width: 900px; height: 85vh; max-height: 800px;
+                border-radius: 24px; border: 1px solid var(--glass-border); 
+                box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15); 
+            }
+        }
+        @media (max-width: 767px) {
+            .app-container { border-radius: 0; border: none; box-shadow: none; }
+            .header { padding: 12px 16px; }
+            .screen { padding: 16px 12px; top: 60px; }
+            .input-code, .chat-input, .input-text { font-size: 16px; } /* Prevents iOS auto-zoom */
+            .code-display { font-size: 2.5rem; letter-spacing: 8px; }
+            .msg-wrapper { max-width: 92%; }
         }
 
+        /* Header */
+        .header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); background: rgba(127, 127, 127, 0.05); flex-shrink: 0; }
         .brand-title { display: flex; flex-direction: column; gap: 2px; }
         .brand-title h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
 
-        .ping-indicator {
-            font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);
-            display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s;
-        }
+        .ping-indicator { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s; }
         .ping-indicator.visible { opacity: 1; }
 
-        .header-actions { display: flex; align-items: center; gap: 16px; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .icon-btn { background: rgba(127, 127, 127, 0.1); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); padding: 8px; border-radius: 50%; width: 36px; height: 36px; }
+        .icon-btn:hover { color: var(--text-main); transform: scale(1.05); background: rgba(127, 127, 127, 0.2); border-color: var(--glass-highlight); }
 
-        /* ИЗМЕНЕНО: Кнопка звука */
-        .icon-btn {
-            background: none; border: none; color: var(--text-muted); cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: color 0.2s, transform 0.2s; padding: 4px; border-radius: 50%;
-        }
-        .icon-btn:hover { color: var(--accent); transform: scale(1.1); background: rgba(255,255,255,0.05); }
-
-        .status-badge {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(0,0,0,0.4); padding: 6px 14px;
-            border-radius: 30px; border: 1px solid var(--glass-border);
-            font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em;
-            min-width: 100px;
-        }
-
+        .status-badge { display: flex; align-items: center; gap: 8px; background: rgba(127, 127, 127, 0.1); padding: 6px 14px; border-radius: 30px; border: 1px solid var(--glass-border); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; min-width: 100px; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 8px var(--danger); transition: all 0.3s; }
         .status-dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); }
         .status-dot.waiting { background: var(--warning); box-shadow: 0 0 10px var(--warning); animation: pulse 1.5s infinite; }
+        .status-dot.typing { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); animation: pulseFast 0.8s infinite; }
 
-        /* ИЗМЕНЕНО: Контейнер для статуса и надписи "Печатает" */
         .status-text-group { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 14px; }
         #status-label { transition: opacity 0.2s; }
-        
-        .typing-label {
-            font-size: 0.55rem; color: var(--accent); opacity: 0;
-            height: 0; overflow: hidden; transition: all 0.2s;
-            text-transform: lowercase; font-style: italic;
-        }
+        .typing-label { font-size: 0.55rem; color: var(--accent); opacity: 0; height: 0; overflow: hidden; transition: all 0.2s; text-transform: lowercase; font-style: italic; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        @keyframes pulseFast { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Экраны */
-        .screen {
-            flex: 1; display: flex; flex-direction: column; padding: 32px 24px; overflow-y: auto;
-            position: absolute; top: 70px; left: 0; right: 0; bottom: 0;
-            opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        /* Screens */
+        .screen { flex: 1; display: flex; flex-direction: column; padding: 32px 24px; overflow-y: auto; position: absolute; top: 70px; left: 0; right: 0; bottom: 0; opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); position: relative; top: 0; }
 
-        /* Типографика и элементы */
         .title-block { text-align: center; margin-bottom: 32px; }
         .title-block h2 { font-size: 1.4rem; font-weight: 500; margin-bottom: 8px; }
         .title-block p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
 
-        .btn {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border);
-            color: var(--text-main); padding: 16px; border-radius: 14px;
-            font-size: 1rem; font-weight: 500; cursor: pointer;
-            width: 100%; max-width: 400px; margin: 0 auto 12px auto;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: all 0.2s ease; backdrop-filter: blur(10px);
-        }
-        .btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--glass-highlight); transform: translateY(-1px); }
+        .input-text, .input-code { background: rgba(127, 127, 127, 0.05); border: 1px solid var(--glass-border); color: var(--text-main); border-radius: 14px; display: block; margin: 0 auto 24px auto; width: 100%; max-width: 400px; transition: all 0.3s; text-align: center; outline: none; }
+        .input-text { padding: 16px; font-family: var(--font-sans); font-size: 1rem; }
+        .input-code { padding: 20px; font-family: var(--font-mono); font-size: 2rem; letter-spacing: 8px; }
+        .input-text:focus, .input-code:focus { border-color: var(--glass-highlight); background: rgba(127, 127, 127, 0.1); }
+        .input-text::placeholder, .input-code::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+        .btn { background: rgba(127, 127, 127, 0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 16px; border-radius: 14px; font-size: 1rem; font-weight: 500; cursor: pointer; width: 100%; max-width: 400px; margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); backdrop-filter: blur(10px); }
+        .btn:hover { background: rgba(127, 127, 127, 0.1); border-color: var(--glass-highlight); transform: translateY(-1px); }
         .btn:active { transform: translateY(1px); }
         .btn-primary { background: var(--text-main); color: var(--bg-dark); border: none; }
-        .btn-primary:hover { background: #e0e0e0; box-shadow: 0 4px 15px rgba(255,255,255,0.15); }
-        .btn-primary:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-primary:hover { background: var(--text-muted); box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: var(--bg-dark); }
+        .btn-primary:disabled { background: var(--glass-border); color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .code-display-box {
-            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; text-align: center;
-            margin: 0 auto 24px auto; width: 100%; max-width: 400px;
-        }
-        .code-display { font-family: var(--font-mono); font-size: 3rem; font-weight: 500; letter-spacing: 12px; margin-right: -12px; color: var(--accent); text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .code-display-box { background: rgba(127, 127, 127, 0.05); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; text-align: center; margin: 0 auto 24px auto; width: 100%; max-width: 400px; }
+        .code-display { font-family: var(--font-mono); font-size: 3rem; font-weight: 500; letter-spacing: 12px; margin-right: -12px; color: var(--text-main); text-shadow: 0 0 20px rgba(127,127,127,0.2); }
 
-        .input-code {
-            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); color: var(--accent); padding: 20px; border-radius: 14px;
-            font-family: var(--font-mono); font-size: 2rem; text-align: center; letter-spacing: 8px; outline: none;
-            width: 100%; max-width: 400px; margin: 0 auto 24px auto; display: block; transition: border-color 0.3s;
-        }
-        .input-code:focus { border-color: var(--glass-highlight); background: rgba(0, 0, 0, 0.5); }
-        .input-code::placeholder { color: rgba(255,255,255,0.1); }
-
-        /* Чат */
+        /* Chat */
         .chat-container { padding: 0 !important; }
-        
-        #messages {
-            flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
-            width: 100%; max-width: 1000px; margin: 0 auto; /* ИЗМЕНЕНО: Ограничение ширины самого чата на огромных экранах */
-        }
+        #messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; width: 100%; margin: 0 auto; }
 
-        .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: bottom; }
         .msg-wrapper.mine { align-self: flex-end; align-items: flex-end; }
         .msg-wrapper.theirs { align-self: flex-start; align-items: flex-start; }
 
-        .msg-time { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); margin-bottom: 4px; opacity: 0.7; }
+        .msg-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px; opacity: 0.8; }
+        .msg-nick { font-weight: 700; color: var(--accent); letter-spacing: 0.02em; } /* Visual accent on nickname */
 
         .msg { padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; position: relative; }
-        .mine .msg { background: var(--text-main); color: var(--bg-dark); border-bottom-right-radius: 4px; }
-        .theirs .msg { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; backdrop-filter: blur(10px); }
+        .mine .msg { background: var(--msg-mine-bg); color: var(--msg-mine-text); border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .theirs .msg { background: var(--msg-theirs-bg); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; backdrop-filter: blur(10px); }
 
-        .msg.system {
-            align-self: center; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: var(--text-muted);
-            font-family: var(--font-mono); font-size: 0.7rem; padding: 6px 14px; border-radius: 20px; text-align: center; margin: 8px 0; max-width: 90%;
-        }
+        .msg.system { align-self: center; background: var(--sys-bg); border: 1px solid var(--glass-border); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 6px 14px; border-radius: 20px; text-align: center; margin: 8px 0; max-width: 90%; }
+        .msg.system.error { border-color: rgba(255, 69, 58, 0.3); color: var(--danger); }
 
-        .chat-input-wrapper { background: rgba(0,0,0,0.2); border-top: 1px solid var(--glass-border); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-        
-        .chat-input-area {
-            padding: 16px 20px 0 20px; display: flex; gap: 12px;
-            width: 100%; max-width: 1000px; margin: 0 auto;
-        }
+        /* File Transfer UI */
+        .file-transfer-box { min-width: 200px; display: flex; flex-direction: column; gap: 10px; }
+        .file-info { display: flex; align-items: center; gap: 12px; }
+        .file-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(127,127,127,0.1); display: flex; align-items: center; justify-content: center; }
+        .file-details { flex: 1; overflow: hidden; }
+        .file-name { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .file-size { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+        .file-progress-container { height: 4px; background: var(--progress-track); border-radius: 2px; overflow: hidden; width: 100%; margin-top: 4px; }
+        .file-progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.2s linear; }
+        .btn-download { display: none; margin-top: 8px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main); text-align: center; padding: 6px; border-radius: 8px; font-size: 0.8rem; text-decoration: none; font-weight: 500; transition: all 0.2s; }
+        .btn-download:hover { background: rgba(127,127,127,0.2); }
+        .msg-wrapper.mine .btn-download { background: var(--bg-dark); color: var(--text-main); border-color: transparent; }
 
-        .chat-input {
-            flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: var(--text-main);
-            padding: 14px 18px; border-radius: 24px; font-size: 0.95rem; font-family: var(--font-sans); outline: none; transition: all 0.3s;
-        }
-        .chat-input:focus { border-color: var(--glass-highlight); background: rgba(255, 255, 255, 0.08); }
+        /* Input Area */
+        .chat-input-wrapper { background: rgba(127,127,127,0.05); border-top: 1px solid var(--glass-border); padding-bottom: calc(16px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+        .chat-input-area { padding: 16px 20px 0 20px; display: flex; gap: 12px; align-items: center; width: 100%; margin: 0 auto; }
+
+        .btn-attach { width: 44px; height: 44px; border-radius: 50%; background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; position: relative; }
+        .btn-attach:hover { color: var(--text-main); background: rgba(127,127,127,0.1); border-color: var(--glass-border); }
+        .btn-attach.active { color: var(--success); }
+        .btn-attach.sending::after { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 50%; border: 2px solid var(--success); border-top-color: transparent; animation: spin 1s linear infinite; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .chat-input { flex: 1; background: rgba(127, 127, 127, 0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 14px 18px; border-radius: 24px; font-size: 0.95rem; font-family: var(--font-sans); outline: none; transition: all 0.3s; }
+        .chat-input:focus { border-color: var(--glass-highlight); background: rgba(127, 127, 127, 0.08); }
         .chat-input::placeholder { color: var(--text-muted); }
 
-        .btn-send {
-            width: 48px; height: 48px; border-radius: 50%; background: var(--text-main); color: var(--bg-dark); border: none;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; flex-shrink: 0;
-        }
-        .btn-send:hover { transform: scale(1.05); background: #fff; }
+        .btn-send { width: 44px; height: 44px; border-radius: 50%; background: var(--text-main); color: var(--bg-dark); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; flex-shrink: 0; }
+        .btn-send:hover { transform: scale(1.05); background: var(--text-muted); }
         .btn-send:active { transform: scale(0.95); }
         .btn-send svg { margin-left: -2px; }
 
-        /* ИЗМЕНЕНО: Обновленный футер со ссылкой на GitHub */
-        .brand-footer {
-            text-align: center; padding: 16px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);
-            letter-spacing: 0.05em; opacity: 0.6; transition: opacity 0.3s;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        /* Footer */
+        .brand-footer { text-align: center; padding: 16px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.05em; opacity: 0.6; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .brand-footer:hover { opacity: 1; }
         .brand-footer span { font-weight: 500; color: var(--text-main); }
-        .brand-footer a {
-            color: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-            background: rgba(255,255,255,0.05); padding: 4px; border-radius: 50%;
-        }
-        .brand-footer a:hover { color: var(--accent); background: rgba(255,255,255,0.1); transform: scale(1.1); }
+        .brand-footer a { color: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: rgba(127,127,127,0.05); padding: 4px; border-radius: 50%; }
+        .brand-footer a:hover { color: var(--accent); background: rgba(127,127,127,0.2); transform: scale(1.1); }
 
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        @media (max-width: 600px) {
-            .header { padding: 16px; }
-            .screen { padding: 24px 16px; }
-            .input-code, .chat-input { font-size: 16px; }
-            .code-display { font-size: 2.5rem; letter-spacing: 8px; }
-            .msg-wrapper { max-width: 90%; }
-        }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
 <div class="ambient-bg">
     <div class="ambient-blob blob-1"></div>
@@ -269,9 +227,13 @@
             </div>
         </div>
         <div class="header-actions">
+            <button id="theme-btn" class="icon-btn" onclick="toggleTheme()" title="Переключить тему">
+                <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <svg id="icon-sun" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
             <button id="mute-btn" class="icon-btn" onclick="toggleMute()" title="Уведомления">
-                <svg id="icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                <svg id="icon-sound-off" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="1" x2="1" y2="23"></line><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <svg id="icon-sound-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <svg id="icon-sound-off" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="1" x2="1" y2="23"></line><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             </button>
 
             <div class="status-badge">
@@ -289,6 +251,7 @@
             <h2>mProtocol</h2>
             <p>Прямое P2P соединение.<br>Трафик не проходит через сервер.</p>
         </div>
+        <input type="text" id="nickname-input" class="input-text" placeholder="Никнейм" maxlength="16" autocomplete="off">
         <button class="btn btn-primary" onclick="initHostSession()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             Создать сессию
@@ -302,7 +265,7 @@
     <div id="screen-host" class="screen" style="justify-content: center;">
         <div class="title-block">
             <h2>Инициализация</h2>
-            <p>Передайте этот код второму узлу для установки защищенного соединения.</p>
+            <p>Передайте этот код второму узлу для установки соединения.</p>
         </div>
         <div class="code-display-box">
             <div id="room-code-display" class="code-display">------</div>
@@ -328,9 +291,13 @@
         </div>
         <div class="chat-input-wrapper">
             <div class="chat-input-area">
+                <input type="file" id="file-input" style="display: none;">
+                <button id="btn-attach" class="btn-attach" onclick="document.getElementById('file-input').click()" title="Прикрепить файл">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
                 <input type="text" id="msg-input" class="chat-input" placeholder="Передача данных..." autocomplete="off">
                 <button class="btn-send" onclick="sendMessage()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
         </div>
@@ -345,7 +312,10 @@
 </div>
 
 <script>
+    /** @type {string} */
     const SIGNALING_SERVER = 'https://mprotocol.onrender.com';
+    
+    /** @type {RTCConfiguration} */
     const rtcConfig = { 
         iceServers: [
             { urls: "stun:stun.l.google.com:19302" },
@@ -356,15 +326,47 @@
         ] 
     };
 
-    let socket = null;
-    let pc = null;
-    let dc = null;
+    /** @type {SocketIOClient.Socket|null} */ let socket = null;
+    /** @type {RTCPeerConnection|null} */ let pc = null;
+    /** @type {RTCDataChannel|null} */ let dc = null;
+    
     let currentRoomId = null;
     let isHost = false;
     let pingInterval;
     let isConnected = false;
+    let sessionNickname = "";
 
-    // ИЗМЕНЕНО: Логика звука и Mute
+    // Memory Management for Blobs
+    let activeObjectUrls = [];
+
+    // --- Sanitization (Anti-XSS) ---
+    function sanitizeHTML(str) {
+        if (!str) return '';
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    }
+
+    // --- App Visibility State ---
+    let isAppHidden = false;
+    document.addEventListener("visibilitychange", () => { isAppHidden = document.hidden; });
+
+    // --- Native Features (Notifications & Vibration) ---
+    function requestNotificationPermission() {
+        if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    }
+
+    function triggerNativeAlert(title, body) {
+        if (!isAppHidden) return; // Trigger only if in background
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Short tactile feedback
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(title, { body: body });
+        }
+    }
+
+    // --- Audio System (Smart Mute) ---
     let isMuted = false;
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
@@ -372,57 +374,70 @@
         isMuted = !isMuted;
         document.getElementById('icon-sound-on').style.display = isMuted ? 'none' : 'block';
         document.getElementById('icon-sound-off').style.display = isMuted ? 'block' : 'none';
-        
-        // Воспроизводим тестовый звук при включении (если нужно)
-        if (!isMuted) {
-            playNotificationSound();
-        }
+        if (!isMuted) playNotificationSound();
     }
 
     function playNotificationSound() {
-        if (isMuted) return; // Проверка статуса
+        if (isMuted) return;
         try {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            // "Телеграмный/iOS" звук: короткий, восходящий пик
             oscillator.type = 'sine'; 
             oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); 
             oscillator.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.05);
             
+            // Smart Mute logic: quieter if app is active, normal volume if hidden
+            const maxVolume = isAppHidden ? 0.3 : 0.05;
+            
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); // Очень короткое затухание
+            gainNode.gain.linearRampToValueAtTime(maxVolume, audioCtx.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); 
             
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             
             oscillator.start(audioCtx.currentTime);
             oscillator.stop(audioCtx.currentTime + 0.15);
-        } catch(e) {
-            console.log("Audio fail:", e);
-        }
+        } catch(e) { console.error("Audio fail:", e); }
     }
 
-    // ИЗМЕНЕНО: Логика статуса "Печатает..."
+    // --- Theme Engine ---
+    let currentTheme = 'dark';
+    function toggleTheme() {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-theme', currentTheme);
+        document.getElementById('icon-moon').style.display = currentTheme === 'dark' ? 'block' : 'none';
+        document.getElementById('icon-sun').style.display = currentTheme === 'dark' ? 'none' : 'block';
+    }
+
+    // --- UI/UX Status ---
     let typingTimeout = null;
     let lastTypingTime = 0;
 
     function showTypingIndicator() {
         const typingLabel = document.getElementById('typing-label');
         const statusLabel = document.getElementById('status-label');
+        const statusDot = document.getElementById('status-indicator');
         
-        statusLabel.style.display = 'none'; // Прячем CONNECTED
+        statusLabel.style.display = 'none';
         typingLabel.style.height = '14px';
         typingLabel.style.opacity = '1';
+        statusDot.classList.add('typing');
         
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
             typingLabel.style.height = '0';
             typingLabel.style.opacity = '0';
-            setTimeout(() => { statusLabel.style.display = 'block'; }, 200); // Возвращаем статус
-        }, 2500); // Исчезает через 2.5 сек
+            statusDot.classList.remove('typing');
+            setTimeout(() => { statusLabel.style.display = 'block'; }, 200);
+        }, 2000);
+    }
+
+    function captureNickname() {
+        const input = document.getElementById('nickname-input').value.trim();
+        sessionNickname = sanitizeHTML(input);
     }
 
     function navTo(screenId) {
@@ -432,8 +447,9 @@
     }
 
     function navToJoin() {
+        captureNickname();
         navTo('screen-guest');
-        setTimeout(() => document.getElementById('join-code-input').focus(), 400);
+        setTimeout(() => document.getElementById('join-code-input').focus(), 400); // Auto-focus requested
     }
 
     function updateStatusUI(state) {
@@ -442,7 +458,6 @@
         const pingUi = document.getElementById('ping-ui');
 
         dot.className = 'status-dot';
-        
         switch(state) {
             case 'offline': label.innerText = 'OFFLINE'; pingUi.classList.remove('visible'); break;
             case 'waiting': dot.classList.add('waiting'); label.innerText = 'SIGNALING...'; break;
@@ -450,16 +465,13 @@
         }
     }
 
+    // --- WebRTC Logic ---
     function connectSocket() {
         if (!socket) {
             updateStatusUI('waiting');
             socket = io(SIGNALING_SERVER, { path: "/socket.io/", transports: ["websocket"] });
             
-            socket.on('connect_error', () => {
-                sysLog("Ошибка сервера сигналинга. Проверьте Render.");
-                updateStatusUI('offline');
-            });
-
+            socket.on('connect_error', () => { sysLog("Ошибка сервера сигналинга.", true); updateStatusUI('offline'); });
             socket.on('signal', async (data) => {
                 if (!pc) return;
                 try {
@@ -479,6 +491,7 @@
     }
 
     function initHostSession() {
+        captureNickname();
         connectSocket();
         isHost = true;
         navTo('screen-host');
@@ -486,13 +499,10 @@
 
         socket.emit('create-room');
         socket.on('room-created', (id) => {
-            currentRoomId = id;
-            document.getElementById('room-code-display').innerText = id;
-            setupWebRTC(true);
+            currentRoomId = id; document.getElementById('room-code-display').innerText = id; setupWebRTC(true);
         });
 
         socket.on('guest-joined', async () => {
-            sysLog("Узел обнаружен. Обмен ключами...");
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             socket.emit('signal', { roomId: currentRoomId, data: offer });
@@ -510,12 +520,14 @@
         connectSocket(); isHost = false; currentRoomId = code;
         socket.emit('join-room', code);
 
-        socket.on('join-success', () => { setupWebRTC(false); sysLog("Код принят. Установка P2P соединения..."); });
-        socket.on('error', (msg) => {
-            alert(msg || "Неверный код или сессия закрыта");
-            btn.disabled = false; btn.innerText = "Установить связь";
-            socket.disconnect(); socket = null; updateStatusUI('offline');
-        });
+        socket.on('join-success', () => { setupWebRTC(false); });
+        socket.on('error', (msg) => { alert(msg || "Неверный код"); btn.disabled = false; btn.innerText = "Установить связь"; socket.disconnect(); socket = null; updateStatusUI('offline'); });
+    }
+
+    function cleanupChat() {
+        // Keeps only the initial system message
+        const messagesBox = document.getElementById('messages');
+        messagesBox.innerHTML = '<div class="msg system">Соединение установлено<br>E2EE канал активен</div>';
     }
 
     function cancelSession() {
@@ -523,14 +535,19 @@
         if (pc) { pc.close(); pc = null; }
         if (pingInterval) clearInterval(pingInterval);
         
+        // Memory Cleanup
+        activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
+        activeObjectUrls = [];
+
         currentRoomId = null; isConnected = false; updateStatusUI('offline'); navTo('screen-home');
         document.getElementById('join-code-input').value = '';
         document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
+        
+        cleanupChat();
     }
 
     function setupWebRTC(isInitiator) {
         pc = new RTCPeerConnection(rtcConfig);
-        
         pc.onicecandidate = (e) => { if (e.candidate) socket.emit('signal', { roomId: currentRoomId, data: e.candidate }); };
         pc.oniceconnectionstatechange = () => {
             if(pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') handleConnectionSuccess();
@@ -541,88 +558,243 @@
         else { pc.ondatachannel = (e) => { dc = e.channel; setupDataChannel(); }; }
     }
 
+    // --- File Transfer State (Receiver) ---
+    let receiveBuffer = [];
+    let receiveMeta = null;
+    let receivedSize = 0;
+
     function setupDataChannel() {
+        dc.binaryType = 'arraybuffer';
         dc.onopen = () => { if(!isConnected) handleConnectionSuccess(); };
         dc.onclose = () => { handleConnectionDrop(); };
 
         dc.onmessage = (e) => {
+            if (typeof e.data !== 'string') {
+                if (!receiveMeta) return;
+                receiveBuffer.push(e.data);
+                receivedSize += e.data.byteLength;
+                
+                const progress = Math.min(100, Math.round((receivedSize / receiveMeta.size) * 100));
+                updateFileProgress(`msg-${receiveMeta.id}`, progress);
+                return;
+            }
+
             if (e.data.startsWith('__PING__')) { dc.send(e.data.replace('__PING__', '__PONG__')); return; }
             if (e.data.startsWith('__PONG__')) {
                 const timestamp = parseInt(e.data.split(':')[1]);
-                document.getElementById('ping-value').innerText = `${Date.now() - timestamp} ms`;
-                return;
+                document.getElementById('ping-value').innerText = `${Date.now() - timestamp} ms`; return;
             }
+            if (e.data === '__TYPING__') { showTypingIndicator(); return; }
             
-            // ИЗМЕНЕНО: Перехват технического пакета "Печатает"
-            if (e.data === '__TYPING__') {
-                showTypingIndicator();
-                return;
-            }
-            
-            renderMessage(e.data, 'theirs');
+            try {
+                const payload = JSON.parse(e.data);
+                if (payload.type === 'msg') {
+                    renderMessage(payload.text, 'theirs', payload.nick);
+                } else if (payload.type === 'file-meta') {
+                    receiveBuffer = []; receiveMeta = payload; receivedSize = 0;
+                    renderFileMessage(payload.name, payload.size, 'theirs', payload.nick, `msg-${payload.id}`);
+                    playNotificationSound();
+                    triggerNativeAlert("Новый файл", payload.name);
+                } else if (payload.type === 'file-eof') {
+                    if (!receiveMeta || receiveMeta.id !== payload.id) return;
+                    const blob = new Blob(receiveBuffer, { type: receiveMeta.mime });
+                    const url = URL.createObjectURL(blob);
+                    markFileComplete(`msg-${receiveMeta.id}`, url);
+                    receiveBuffer = []; receiveMeta = null; receivedSize = 0;
+                }
+            } catch(err) { renderMessage(e.data, 'theirs'); }
         };
     }
 
     function handleConnectionSuccess() {
         isConnected = true; updateStatusUI('connected'); navTo('screen-chat');
+        requestNotificationPermission();
         pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${Date.now()}`); }, 2000);
         if(socket) { socket.disconnect(); socket = null; }
     }
 
     function handleConnectionDrop() {
         isConnected = false; clearInterval(pingInterval); updateStatusUI('offline');
-        sysLog("Соединение с удаленным узлом разорвано.");
+        sysLog("Соединение разорвано.", true);
+        
+        // Interrupt Transfer Error Handling
+        if (isSendingFile || receiveMeta) {
+            sysLog("Ошибка: Передача файла прервана.", true);
+            isSendingFile = false;
+            receiveBuffer = [];
+            receiveMeta = null;
+            document.getElementById('btn-attach').classList.remove('active', 'sending');
+        }
+    }
+
+    // --- File Transfer UI & Logic (Sender) ---
+    const CHUNK_SIZE = 16384; 
+    let isSendingFile = false;
+
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !dc || dc.readyState !== 'open') return;
+        if (isSendingFile) { alert("Уже идет передача"); return; }
+        if (file.size > 50 * 1024 * 1024) { alert("Ограничение 50MB"); return; }
+
+        isSendingFile = true;
+        const btnAttach = document.getElementById('btn-attach');
+        btnAttach.classList.add('active', 'sending');
+        
+        const fileId = Date.now().toString();
+        const safeName = sanitizeHTML(file.name);
+        
+        dc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: safeName, size: file.size, mime: file.type, nick: sessionNickname }));
+        renderFileMessage(safeName, file.size, 'mine', sessionNickname, `msg-${fileId}`);
+
+        const arrayBuffer = await file.arrayBuffer();
+        let offset = 0;
+
+        const sendNextChunk = () => {
+            if (dc.readyState !== 'open' || !isSendingFile) return;
+            
+            // Queue Control: Give priority to UI and text messages if buffer is filling up
+            if (dc.bufferedAmount > 8 * 1024 * 1024) {
+                setTimeout(sendNextChunk, 100);
+                return;
+            }
+
+            const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE);
+            dc.send(chunk);
+            offset += chunk.byteLength;
+            
+            updateFileProgress(`msg-${fileId}`, Math.round((offset / file.size) * 100));
+
+            if (offset < file.size) {
+                setTimeout(sendNextChunk, 5); // Allow event loop to process texts
+            } else {
+                dc.send(JSON.stringify({ type: 'file-eof', id: fileId }));
+                isSendingFile = false;
+                btnAttach.classList.remove('active', 'sending');
+                markFileComplete(`msg-${fileId}`, null);
+            }
+        };
+        sendNextChunk();
+        e.target.value = ''; 
+    });
+
+    // --- UI Renderers ---
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024; const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     function getTime() { const now = new Date(); return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`; }
 
+    function buildMessageWrapper(sender, nick) {
+        const wrapperDiv = document.createElement('div'); wrapperDiv.className = `msg-wrapper ${sender}`;
+        const metaDiv = document.createElement('div'); metaDiv.className = 'msg-meta';
+        const timeSpan = document.createElement('span'); timeSpan.innerText = getTime();
+        
+        if (nick) {
+            const nickSpan = document.createElement('span'); nickSpan.className = 'msg-nick'; nickSpan.innerText = nick; // Sanitized on input
+            metaDiv.appendChild(nickSpan);
+        }
+        metaDiv.appendChild(timeSpan);
+        wrapperDiv.appendChild(metaDiv);
+        return wrapperDiv;
+    }
+
     function sendMessage() {
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
-        
         if (text && dc && dc.readyState === 'open') {
-            dc.send(text);
-            renderMessage(text, 'mine');
+            const safeText = sanitizeHTML(text);
+            dc.send(JSON.stringify({ type: 'msg', nick: sessionNickname, text: safeText }));
+            renderMessage(safeText, 'mine', sessionNickname);
             input.value = ''; input.focus();
         }
     }
 
-    function renderMessage(text, sender) {
+    function renderMessage(text, sender, nick = "") {
         const box = document.getElementById('messages');
-        const wrapperDiv = document.createElement('div'); wrapperDiv.className = `msg-wrapper ${sender}`;
-        const msgDiv = document.createElement('div'); msgDiv.className = `msg`; msgDiv.innerText = text;
-        const metaDiv = document.createElement('div'); metaDiv.className = 'msg-time'; metaDiv.innerText = getTime();
+        const wrapperDiv = buildMessageWrapper(sender, nick);
         
-        wrapperDiv.appendChild(msgDiv); wrapperDiv.appendChild(metaDiv); box.appendChild(wrapperDiv);
+        const msgDiv = document.createElement('div'); msgDiv.className = `msg`; 
+        msgDiv.innerHTML = sanitizeHTML(text); // Safe injection
+        
+        wrapperDiv.appendChild(msgDiv); 
+        box.appendChild(wrapperDiv);
         box.scrollTop = box.scrollHeight;
 
         if (sender === 'theirs') {
             playNotificationSound();
-            // Если пришло сообщение, сразу гасим "Печатает"
+            triggerNativeAlert(nick || "mProtocol", text);
             document.getElementById('typing-label').style.height = '0';
             document.getElementById('typing-label').style.opacity = '0';
+            document.getElementById('status-indicator').classList.remove('typing');
             document.getElementById('status-label').style.display = 'block';
         }
     }
 
-    function sysLog(text) {
+    function renderFileMessage(name, size, sender, nick, msgId) {
         const box = document.getElementById('messages');
-        const sysDiv = document.createElement('div'); sysDiv.className = `msg system`; sysDiv.innerText = text;
+        const wrapperDiv = buildMessageWrapper(sender, nick);
+        wrapperDiv.id = msgId;
+
+        const msgDiv = document.createElement('div'); msgDiv.className = `msg`;
+        msgDiv.innerHTML = `
+            <div class="file-transfer-box">
+                <div class="file-info">
+                    <div class="file-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    </div>
+                    <div class="file-details">
+                        <span class="file-name" title="${name}">${name}</span>
+                        <span class="file-size">${formatBytes(size)}</span>
+                    </div>
+                </div>
+                <div class="file-progress-container"><div class="file-progress-fill" id="prog-${msgId}"></div></div>
+                <a href="#" class="btn-download" id="dl-${msgId}" download="${name}">Скачать</a>
+            </div>
+        `;
+        
+        wrapperDiv.appendChild(msgDiv); 
+        box.appendChild(wrapperDiv);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function updateFileProgress(msgId, percent) {
+        const prog = document.getElementById(`prog-${msgId}`);
+        if (prog) prog.style.width = `${percent}%`;
+    }
+
+    function markFileComplete(msgId, objectUrl) {
+        const prog = document.getElementById(`prog-${msgId}`);
+        if (prog) prog.style.background = 'var(--text-muted)'; 
+        
+        if (objectUrl) {
+            activeObjectUrls.push(objectUrl); // Track for memory cleanup
+            const btn = document.getElementById(`dl-${msgId}`);
+            if (btn) {
+                btn.href = objectUrl;
+                btn.style.display = 'block';
+            }
+        }
+    }
+
+    function sysLog(text, isError = false) {
+        const box = document.getElementById('messages');
+        const sysDiv = document.createElement('div'); 
+        sysDiv.className = `msg system ${isError ? 'error' : ''}`; 
+        sysDiv.innerText = text;
         if(box) { box.appendChild(sysDiv); box.scrollTop = box.scrollHeight; }
     }
 
     document.getElementById('msg-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
     document.getElementById('join-code-input').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
 
-    // ИЗМЕНЕНО: Отслеживание ввода текста для статуса "Печатает"
     document.getElementById('msg-input').addEventListener('input', () => {
         if (dc && dc.readyState === 'open') {
             const now = Date.now();
-            // Отправляем пакет не чаще 1 раза в 1.5 секунды, чтобы не спамить канал
-            if (now - lastTypingTime > 1500) {
-                dc.send('__TYPING__');
-                lastTypingTime = now;
-            }
+            if (now - lastTypingTime > 1500) { dc.send('__TYPING__'); lastTypingTime = now; }
         }
     });
 
