@@ -505,7 +505,7 @@
     async function initHostSession() {
         captureNickname();
         navTo('screen-host');
-        document.getElementById('room-code-display').innerText = 'Загрузка...';
+        document.getElementById('room-code-display').innerText = '...';
 
         await fetchIceConfig(); // Получаем ключи перед подключением
 
