@@ -1,6 +1,6 @@
 # 🔗 [mProtocol](https://majestorg.github.io/mProtocol/)
-
-> **P2P messenger with a "M-Link" architecture.**
+> [!IMPORTANT] 
+> Вышел [Release V2](https://github.com/MAJESTORG/mProtocol/releases/tag/New_Release)
 
 ---
 
@@ -12,7 +12,7 @@
       <p><b>mProtocol</b> — это приватный мессенджер, построенный на технологии WebRTC.</p>
       <p align="left">
         <img src="https://img.shields.io/badge/Version-2.0-success" alt="Status"> 
-        <img src="https://img.shields.io/badge/Status-stable-blue" alt="Architecture">
+        <img src="https://img.shields.io/badge/Status-Stable-blue" alt="Architecture">
         <img src="https://img.shields.io/badge/Tech-WebRTC-orange" alt="Security">
       </p>
     </td>
@@ -40,7 +40,7 @@
 
 ## 🧠 Логика работы
 
-> [!IMPORTANT]
+> [!NOTE]
 >* **Zero-Server Storage**: Сообщения передаются напрямую между браузерами. Данные не сохраняются на сервере и не записываются в базу данных.
 
 * **P2P Data Channel**: Прямой канал передачи данных между браузерами.
