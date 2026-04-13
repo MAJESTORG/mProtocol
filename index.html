@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -602,7 +603,10 @@
                     if (payload.id && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'ack', id: payload.id })); // Отправка ACK
                 } else if (payload.type === 'ack') {
                     const ackSpan = document.getElementById(`ack-${payload.id}`);
-                    if (ackSpan) ackSpan.innerText = ' ✓'; // Подтверждение доставки
+                    if (ackSpan) {
+                        ackSpan.innerText = ' ✓';
+                        ackSpan.title = 'Доставлено на устройство собеседника'; // Текст при наведении
+                    }
                 } else if (payload.type === 'file-meta') {
                     receiveBuffer = []; receiveMeta = payload; receivedSize = 0;
                     renderFileMessage(payload.name, payload.size, 'theirs', payload.nick, `msg-${payload.id}`);
@@ -623,13 +627,30 @@
         requestNotificationPermission();
         pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${Date.now()}`); }, 2000);
         
-        // Tooltip Stats Интервал
+        // Обновление технической сводки в тултипе
         statsInterval = setInterval(async () => {
             if (pc && isConnected) {
                 try {
                     const stats = await pc.getStats();
-                    let techInfo = `ICE State: ${pc.iceConnectionState}\nSignaling: ${pc.signalingState}`;
-                    stats.forEach(r => { if (r.type === 'candidate-pair' && r.state === 'succeeded') techInfo += `\nRTT: ${(r.currentRoundTripTime * 1000).toFixed(0)}ms`; });
+                    let connectionType = "Unknown";
+                    let candidateType = "";
+
+                    stats.forEach(report => {
+                        if (report.type === 'remote-candidate') {
+                            candidateType = report.candidateType; // host, srflx или relay
+                        }
+                        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                            // Определяем тип: relay — через сервер, остальное — напрямую/P2P
+                            connectionType = (candidateType === 'relay') ? "Server Relay" : "Direct P2P";
+                        }
+                    });
+
+                    const techInfo = [
+                        `Mode: ${connectionType}`,
+                        `ICE: ${pc.iceConnectionState}`,
+                        `Type: ${candidateType}`
+                    ].join('\n');
+
                     document.getElementById('status-badge-container').title = techInfo;
                 } catch(e){}
             }
@@ -773,7 +794,15 @@
             const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE); dc.send(chunk); offset += chunk.byteLength;
             updateFileProgress(`msg-${fileId}`, Math.round((offset / file.size) * 100));
             if (offset < file.size) setTimeout(sendNextChunk, 5);
-            else { dc.send(JSON.stringify({ type: 'file-eof', id: fileId })); isSendingFile = false; btnAttach.classList.remove('sending'); markFileComplete(`msg-${fileId}`, null, file.type); }
+            else { 
+                dc.send(JSON.stringify({ type: 'file-eof', id: fileId })); 
+                isSendingFile = false; 
+                btnAttach.classList.remove('sending'); 
+                
+                // Создаем превью из локального файла
+                const localUrl = URL.createObjectURL(file);
+                markFileComplete(`msg-${fileId}`, localUrl, file.type); 
+            }
         };
         sendNextChunk();
     }
