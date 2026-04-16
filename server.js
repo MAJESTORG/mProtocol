@@ -1,13 +1,13 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors'); // Добавлено для работы с внешними запросами
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
 
-// Разрешаем CORS для всех маршрутов, чтобы /ice-config был доступен браузеру
-app.use(cors()); 
+// Разрешаем CORS, чтобы браузер мог получить конфиг и подключить сокеты
+app.use(cors());
 
 const io = new Server(server, {
     cors: {
@@ -19,7 +19,12 @@ const io = new Server(server, {
     transports: ['websocket', 'polling']
 });
 
-// Эндпоинт для безопасной передачи ICE конфигурации
+// Проверка работоспособности (для Render)
+app.get('/', (req, res) => {
+    res.send('mProtocol Server is running');
+});
+
+// Эндпоинт для получения ICE конфигурации (TURN серверы)
 app.get('/ice-config', (req, res) => {
     res.json({
         iceServers: [
@@ -74,13 +79,18 @@ io.on('connection', (socket) => {
         for (const [roomId, members] of rooms.entries()) {
             if (members.has(socket.id)) {
                 members.delete(socket.id);
-                if (members.size === 0) rooms.delete(roomId);
+                if (members.size === 0) {
+                    rooms.delete(roomId);
+                }
+                break;
             }
         }
+        console.log('User disconnected:', socket.id);
     });
 });
 
+// Запуск сервера на порту, который выдает Render, или на 3000 локально
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server is active on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
