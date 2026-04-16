@@ -11,7 +11,7 @@
       <h2>⚡ О проекте</h2>
       <p><b>mProtocol</b> — это приватный мессенджер, построенный на технологии WebRTC.</p>
       <p align="left">
-        <img src="https://img.shields.io/badge/Version-2.1-success" alt="Status"> 
+        <img src="https://img.shields.io/badge/Version-2.2-success" alt="Status"> 
         <img src="https://img.shields.io/badge/Status-Stable-blue" alt="Architecture">
         <img src="https://img.shields.io/badge/Tech-WebRTC-orange" alt="Security">
       </p>
