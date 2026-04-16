@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -123,7 +122,6 @@
         .screen { flex: 1; display: flex; flex-direction: column; padding: 32px 24px; overflow-y: auto; position: absolute; top: 70px; left: 0; right: 0; bottom: 0; opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); position: relative; top: 0; }
         
-        /* Изменение для Drag & Drop */
         .drag-active { box-shadow: inset 0 0 0 2px var(--accent) !important; background: rgba(127,127,127,0.1) !important; border-radius: 16px; }
 
         .title-block { text-align: center; margin-bottom: 32px; }
@@ -148,7 +146,7 @@
 
         /* Chat */
         .chat-container { padding: 0 !important; }
-        #messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; width: 100%; margin: 0 auto; }
+        #messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; width: 100%; margin: 0 auto; overflow-x: hidden; }
 
         .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: bottom; }
         .msg-wrapper.mine { align-self: flex-end; align-items: flex-end; }
@@ -156,25 +154,63 @@
 
         .msg-meta { display: flex; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px; opacity: 0.8; }
         .msg-nick { font-weight: 700; color: var(--accent); letter-spacing: 0.02em; } 
-        /* Статус доставки */
         .msg-ack { color: var(--success); font-weight: bold; font-size: 0.7rem; margin-left: 2px; }
 
-        .msg { padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; position: relative; }
-        .mine .msg { background: var(--msg-mine-bg); color: var(--msg-mine-text); border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .theirs .msg { background: var(--msg-theirs-bg); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; backdrop-filter: blur(10px); }
+        /* Reply Button UI */
+        .btn-reply-msg { 
+            background: rgba(127, 127, 127, 0.08); 
+            border: 1px solid var(--glass-border); 
+            color: var(--text-muted); 
+            cursor: pointer; 
+            opacity: 0.6; 
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+            padding: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            width: 28px;  
+            height: 28px; 
+            border-radius: 50%; 
+            flex-shrink: 0;
+        }
+
+        .btn-reply-msg:hover { 
+            opacity: 1; 
+            color: var(--accent); 
+            background: rgba(127, 127, 127, 0.15); 
+            border-color: var(--glass-highlight);
+            transform: scale(1.1); 
+        }
+
+        .btn-reply-msg:active {
+            transform: scale(0.9); 
+        }
+
+        .btn-reply-msg svg { width: 14px; height: 14px; }
         
-        /* Markdown стили */
+        /* Markdown, Links & Text Formatting Fix */
+        .msg { word-break: break-word; overflow-wrap: anywhere; max-width: 100%; line-height: 1.4; }
         .msg b { font-weight: 700; }
         .msg i { font-style: italic; }
+        .chat-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; transition: opacity 0.2s; }
+        .mine .chat-link { color: var(--bg-dark); opacity: 0.8; }
+        .theirs .chat-link { color: var(--accent); opacity: 0.9; }
+        .chat-link:hover { opacity: 1; }
+
+        /* Quote / Reply Block inside Message */
+        .quote-block { border-left: 2px solid var(--glass-highlight); padding-left: 10px; margin-bottom: 8px; font-size: 0.85rem; opacity: 0.8; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+        .mine .quote-block { border-left-color: rgba(0,0,0,0.2); }
+        .quote-author { font-weight: 700; font-family: var(--font-mono); font-size: 0.65rem; margin-bottom: 2px; }
+        .quote-text { overflow-wrap: anywhere; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; }
 
         .msg.system { align-self: center; background: var(--sys-bg); border: 1px solid var(--glass-border); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.7rem; padding: 6px 14px; border-radius: 20px; text-align: center; margin: 8px 0; max-width: 90%; }
         .msg.system.error { border-color: rgba(255, 69, 58, 0.3); color: var(--danger); }
 
-        /* File Transfer UI */
-        .file-transfer-box { min-width: 200px; display: flex; flex-direction: column; gap: 10px; }
-        .file-info { display: flex; align-items: center; gap: 12px; }
-        .file-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(127,127,127,0.1); display: flex; align-items: center; justify-content: center; }
-        .file-details { flex: 1; overflow: hidden; }
+        /* File Transfer & Audio UI */
+        .file-transfer-box { min-width: 200px; display: flex; flex-direction: column; gap: 10px; max-width: 100%; }
+        .file-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+        .file-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(127,127,127,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .file-details { flex: 1; min-width: 0; overflow: hidden; }
         .file-name { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
         .file-size { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
         .file-progress-container { height: 4px; background: var(--progress-track); border-radius: 2px; overflow: hidden; width: 100%; margin-top: 4px; }
@@ -183,52 +219,72 @@
         .btn-download:hover { background: rgba(127,127,127,0.2); }
         .msg-wrapper.mine .btn-download { background: var(--bg-dark); color: var(--text-main); border-color: transparent; }
         
-        /* Стили для предпросмотра изображений */
         .image-preview { max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--glass-border); display: block; object-fit: contain; max-height: 250px; background: rgba(0,0,0,0.2); transition: transform 0.2s; }
         .image-preview-link { display: inline-block; cursor: pointer; }
         .image-preview-link:hover .image-preview { transform: scale(1.02); }
 
+        .audio-player { 
+    width: 100%; 
+    min-width: 250px; /* Увеличенная минимальная ширина */
+    height: 44px; 
+    margin-top: 5px; 
+    outline: none; 
+    border-radius: 22px; 
+}
+        .audio-player::-webkit-media-controls-panel { background: rgba(127,127,127,0.1); }
+
         /* Input Area */
         .chat-input-wrapper { background: rgba(127,127,127,0.05); border-top: 1px solid var(--glass-border); padding-bottom: calc(16px + env(safe-area-inset-bottom, 16px)); flex-shrink: 0; display: flex; flex-direction: column; }
         
-        /* Подготовленный файл */
-        .staged-file-bar { display: none; padding: 8px 20px; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.15); border-bottom: 1px solid var(--glass-border); font-size: 0.8rem; color: var(--accent); }
-        .staged-file-bar.active { display: flex; }
-        .staged-file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%; }
-        .staged-file-bar button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0 4px; }
-        .staged-file-bar button:hover { color: var(--danger); }
+        /* Staged Item Bars (Files & Replies) */
+        .staged-bar { display: none; padding: 8px 20px; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.15); border-bottom: 1px solid var(--glass-border); font-size: 0.8rem; }
+        .staged-bar.active { display: flex; }
+        .staged-content { display: flex; flex-direction: column; overflow: hidden; flex: 1; padding-right: 12px; }
+        .staged-title { font-weight: 600; color: var(--accent); font-family: var(--font-mono); font-size: 0.65rem; margin-bottom: 2px; }
+        .staged-desc { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        
+        .staged-bar button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0 4px; transition: color 0.2s; }
+        .staged-bar button:hover { color: var(--danger); }
 
-        .chat-input-area { padding: 16px 20px 0 20px; display: flex; gap: 12px; align-items: flex-end; width: 100%; margin: 0 auto; }
+        .chat-input-area { padding: 16px 20px 0 20px; display: flex; gap: 10px; align-items: flex-end; width: 100%; margin: 0 auto; }
 
         .btn-attach { width: 44px; height: 44px; border-radius: 50%; background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; position: relative; }
         .btn-attach:hover { color: var(--text-main); background: rgba(127,127,127,0.1); border-color: var(--glass-border); }
         .btn-attach.active { color: var(--success); }
         .btn-attach.sending::after { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 50%; border: 2px solid var(--success); border-top-color: transparent; animation: spin 1s linear infinite; }
 
+        /* Voice Button */
+        .btn-voice { width: 44px; height: 44px; border-radius: 50%; background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; position: relative; }
+        .btn-voice:hover { color: var(--text-main); background: rgba(127,127,127,0.1); border-color: var(--glass-border); }
+        .btn-voice.recording { color: var(--danger); border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.1); animation: pulseRecord 1.5s infinite; }
+        
+        @keyframes pulseRecord { 0% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 69, 58, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0); } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Использование textarea для переноса строк без поломки верстки */
+        /* Smart Textarea */
         .chat-input { 
-    flex: 1; 
-    background: rgba(127, 127, 127, 0.05); 
-    border: 1px solid var(--glass-border); 
-    color: var(--text-main); 
-    padding: 11px 18px; 
-    border-radius: 24px; 
-    font-size: 0.95rem; 
-    font-family: var(--font-sans); 
-    outline: none; 
-    transition: all 0.3s; 
-    resize: none; 
-    height: 44px; 
-    line-height: 22px; 
-    overflow: hidden; /* Это уберет ползунок */
-}
-.chat-input::-webkit-scrollbar {
-    display: none;
-}
+            flex: 1; 
+            background: rgba(127, 127, 127, 0.05); 
+            border: 1px solid var(--glass-border); 
+            color: var(--text-main); 
+            padding: 11px 16px; 
+            border-radius: 24px; 
+            font-size: 0.95rem; 
+            font-family: var(--font-sans); 
+            outline: none; 
+            transition: border-color 0.3s, background 0.3s; 
+            resize: none; 
+            height: 44px; 
+            min-height: 44px;
+            max-height: 120px;
+            line-height: 20px; 
+            overflow-y: hidden; 
+            box-sizing: border-box;
+            white-space: pre-wrap;
+        }
+        .chat-input::-webkit-scrollbar { display: none; }
         .chat-input:focus { border-color: var(--glass-highlight); background: rgba(127, 127, 127, 0.08); }
-        .chat-input::placeholder { color: var(--text-muted); }
+        .chat-input::placeholder { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .btn-send { width: 44px; height: 44px; border-radius: 50%; background: var(--text-main); color: var(--bg-dark); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; flex-shrink: 0; }
         .btn-send:hover { transform: scale(1.05); background: var(--text-muted); }
@@ -333,16 +389,31 @@
             <div class="msg system">Соединение установлено<br>E2EE канал активен</div>
         </div>
         <div class="chat-input-wrapper">
-            <div id="staged-file-bar" class="staged-file-bar">
-                <span class="staged-file-name" id="staged-file-name"></span>
+            <div id="staged-file-bar" class="staged-bar">
+                <div class="staged-content">
+                    <span class="staged-title">ПРИКРЕПЛЕН ФАЙЛ</span>
+                    <span class="staged-desc" id="staged-file-name"></span>
+                </div>
                 <button onclick="cancelStagedFile()" title="Отменить">✕</button>
             </div>
+            
+            <div id="reply-preview-bar" class="staged-bar">
+                <div class="staged-content">
+                    <span class="staged-title" id="reply-preview-nick">ОТВЕТ</span>
+                    <span class="staged-desc" id="reply-preview-text"></span>
+                </div>
+                <button onclick="cancelReply()" title="Отменить">✕</button>
+            </div>
+
             <div class="chat-input-area">
                 <input type="file" id="file-input" style="display: none;">
                 <button id="btn-attach" class="btn-attach" onclick="document.getElementById('file-input').click()" title="Прикрепить файл">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                 </button>
-                <textarea id="msg-input" class="chat-input" placeholder="Передача данных..." autocomplete="off" rows="1"></textarea>
+                <button id="btn-voice" class="btn-voice" onclick="toggleVoiceRecord()" title="Голосовое сообщение">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                <textarea id="msg-input" class="chat-input" placeholder="Сообщение..." autocomplete="off" rows="1"></textarea>
                 <button class="btn-send" onclick="sendMessage()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
@@ -389,6 +460,9 @@
     let sessionNickname = "";
     let activeObjectUrls = [];
 
+    // State for Reply system
+    let activeReply = null; 
+
     // --- Helpers ---
     function sanitizeHTML(str) {
         if (!str) return '';
@@ -400,6 +474,14 @@
     function formatMarkdown(str) {
         if (!str) return '';
         let html = sanitizeHTML(str);
+        
+        // Auto-Links
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        html = html.replace(urlRegex, function(url) {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-link">${url}</a>`;
+        });
+
+        // Markdown
         html = html.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
         html = html.replace(/\*([^*]+)\*/g, '<i>$1</i>');
         html = html.replace(/\n/g, '<br>');
@@ -561,6 +643,13 @@
         currentRoomId = null; isConnected = false; updateStatusUI('offline'); navTo('screen-home');
         document.getElementById('join-code-input').value = ''; document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
         document.getElementById('messages').innerHTML = '<div class="msg system">Соединение установлено<br>E2EE канал активен</div>';
+        cancelReply(); cancelStagedFile();
+        
+        // Сброс аудио если шла запись
+        if (isRecording && mediaRecorder) {
+            mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            isRecording = false; document.getElementById('btn-voice').classList.remove('recording');
+        }
     }
 
     function setupWebRTC(isInitiator) {
@@ -599,17 +688,17 @@
             try {
                 const payload = JSON.parse(e.data);
                 if (payload.type === 'msg') {
-                    renderMessage(payload.text, 'theirs', payload.nick, payload.id);
-                    if (payload.id && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'ack', id: payload.id })); // Отправка ACK
+                    renderMessage(payload.text, 'theirs', payload.nick, payload.id, payload.replyTo);
+                    if (payload.id && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'ack', id: payload.id }));
                 } else if (payload.type === 'ack') {
                     const ackSpan = document.getElementById(`ack-${payload.id}`);
                     if (ackSpan) {
                         ackSpan.innerText = ' ✓';
-                        ackSpan.title = 'Доставлено на устройство собеседника'; // Текст при наведении
+                        ackSpan.title = 'Доставлено на устройство собеседника';
                     }
                 } else if (payload.type === 'file-meta') {
                     receiveBuffer = []; receiveMeta = payload; receivedSize = 0;
-                    renderFileMessage(payload.name, payload.size, 'theirs', payload.nick, `msg-${payload.id}`);
+                    renderFileMessage(payload.name, payload.size, 'theirs', payload.nick, `msg-${payload.id}`, payload.replyTo);
                     playNotificationSound(); triggerNativeAlert("Новый файл", payload.name);
                 } else if (payload.type === 'file-eof') {
                     if (!receiveMeta || receiveMeta.id !== payload.id) return;
@@ -627,30 +716,19 @@
         requestNotificationPermission();
         pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${Date.now()}`); }, 2000);
         
-        // Обновление технической сводки в тултипе
         statsInterval = setInterval(async () => {
             if (pc && isConnected) {
                 try {
                     const stats = await pc.getStats();
                     let connectionType = "Unknown";
                     let candidateType = "";
-
                     stats.forEach(report => {
-                        if (report.type === 'remote-candidate') {
-                            candidateType = report.candidateType; // host, srflx или relay
-                        }
+                        if (report.type === 'remote-candidate') candidateType = report.candidateType;
                         if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-                            // Определяем тип: relay — через сервер, остальное — напрямую/P2P
                             connectionType = (candidateType === 'relay') ? "Server Relay" : "Direct P2P";
                         }
                     });
-
-                    const techInfo = [
-                        `Mode: ${connectionType}`,
-                        `ICE: ${pc.iceConnectionState}`,
-                        `Type: ${candidateType}`
-                    ].join('\n');
-
+                    const techInfo = [`Mode: ${connectionType}`, `ICE: ${pc.iceConnectionState}`, `Type: ${candidateType}`].join('\n');
                     document.getElementById('status-badge-container').title = techInfo;
                 } catch(e){}
             }
@@ -679,18 +757,43 @@
     }
     function getTime() { const now = new Date(); return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`; }
 
-    function buildMessageWrapper(sender, nick, msgId) {
+    // Init Reply State
+    function initiateReply(msgId, nick, snippet) {
+        activeReply = { id: msgId, nick: nick, text: snippet };
+        document.getElementById('reply-preview-bar').classList.add('active');
+        document.getElementById('reply-preview-nick').innerText = nick ? `ОТВЕТ: ${nick}` : 'ОТВЕТ';
+        document.getElementById('reply-preview-text').innerText = snippet;
+        document.getElementById('msg-input').focus();
+    }
+
+    function cancelReply() {
+        activeReply = null;
+        document.getElementById('reply-preview-bar').classList.remove('active');
+    }
+
+    function buildMessageWrapper(sender, nick, msgId, snippetForReply) {
         const wrapperDiv = document.createElement('div'); wrapperDiv.className = `msg-wrapper ${sender}`;
         if (msgId) wrapperDiv.id = msgId;
 
         const metaDiv = document.createElement('div'); metaDiv.className = 'msg-meta';
         const timeSpan = document.createElement('span'); timeSpan.innerText = getTime();
         
+        // Reply Button
+        const replyBtn = document.createElement('button');
+        replyBtn.className = 'btn-reply-msg';
+        replyBtn.title = "Ответить";
+        replyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>';
+        replyBtn.onclick = () => initiateReply(msgId, nick || "Вы", snippetForReply || "Файл");
+        
+        if (sender === 'mine') metaDiv.appendChild(replyBtn);
+
         if (nick) {
             const nickSpan = document.createElement('span'); nickSpan.className = 'msg-nick'; nickSpan.innerText = nick; 
             metaDiv.appendChild(nickSpan);
         }
         metaDiv.appendChild(timeSpan);
+
+        if (sender === 'theirs') metaDiv.appendChild(replyBtn);
 
         if (sender === 'mine' && msgId) {
             const ackSpan = document.createElement('span'); ackSpan.className = 'msg-ack'; ackSpan.id = `ack-${msgId}`;
@@ -700,11 +803,24 @@
         wrapperDiv.appendChild(metaDiv); return wrapperDiv;
     }
 
-    function renderMessage(text, sender, nick = "", msgId = null) {
+    function buildReplyBlock(replyData) {
+        if (!replyData) return '';
+        const safeNick = sanitizeHTML(replyData.nick);
+        const safeText = sanitizeHTML(replyData.text);
+        return `<div class="quote-block">
+                    <span class="quote-author">${safeNick}</span>
+                    <span class="quote-text">${safeText}</span>
+                </div>`;
+    }
+
+    function renderMessage(text, sender, nick = "", msgId = null, replyData = null) {
         const box = document.getElementById('messages');
-        const wrapperDiv = buildMessageWrapper(sender, nick, msgId);
+        const wrapperDiv = buildMessageWrapper(sender, nick, msgId, text);
         const msgDiv = document.createElement('div'); msgDiv.className = `msg`; 
-        msgDiv.innerHTML = formatMarkdown(text); 
+        
+        const replyHtml = buildReplyBlock(replyData);
+        msgDiv.innerHTML = replyHtml + formatMarkdown(text); 
+        
         wrapperDiv.appendChild(msgDiv); box.appendChild(wrapperDiv); box.scrollTop = box.scrollHeight;
 
         if (sender === 'theirs') {
@@ -714,11 +830,14 @@
         }
     }
 
-    function renderFileMessage(name, size, sender, nick, msgId) {
+    function renderFileMessage(name, size, sender, nick, msgId, replyData = null) {
         const box = document.getElementById('messages');
-        const wrapperDiv = buildMessageWrapper(sender, nick, msgId);
+        const wrapperDiv = buildMessageWrapper(sender, nick, msgId, name);
         const msgDiv = document.createElement('div'); msgDiv.className = `msg`;
-        msgDiv.innerHTML = `
+        
+        const replyHtml = buildReplyBlock(replyData);
+
+        msgDiv.innerHTML = replyHtml + `
             <div class="file-transfer-box">
                 <div class="file-info">
                     <div class="file-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></div>
@@ -739,13 +858,30 @@
             activeObjectUrls.push(objectUrl); const btn = document.getElementById(`dl-${msgId}`);
             if (btn) {
                 btn.href = objectUrl; btn.style.display = 'block';
-                if (mimeType && mimeType.startsWith('image/')) {
-                    const previewContainer = document.getElementById(`preview-container-${msgId}`);
-                    if (previewContainer) {
+                const previewContainer = document.getElementById(`preview-container-${msgId}`);
+                if (previewContainer) {
+                    if (mimeType && mimeType.startsWith('image/')) {
                         const link = document.createElement('a');
                         link.href = objectUrl; link.target = "_blank"; link.title = "Открыть оригинал"; link.className = "image-preview-link";
                         const img = document.createElement('img'); img.src = objectUrl; img.className = 'image-preview';
                         link.appendChild(img); previewContainer.appendChild(link);
+                    } else if (mimeType && (mimeType.startsWith('audio/ogg') || mimeType.startsWith('audio/webm') || mimeType.startsWith('audio/mp3') || mimeType.startsWith('audio/wav'))) {
+                        const audio = document.createElement('audio');
+                        audio.controls = true;
+                        audio.src = objectUrl;
+                        audio.className = 'audio-player';
+                        previewContainer.appendChild(audio);
+                        
+                        // Hide download button for voice messages
+                        btn.style.display = 'none';
+                        
+                        // Clean up UI to make it look like an organic voice message
+                        const transferBox = previewContainer.parentElement;
+                        const fileInfo = transferBox.querySelector('.file-info');
+                        const fileProg = transferBox.querySelector('.file-progress-container');
+                        if (fileInfo) fileInfo.style.display = 'none';
+                        if (fileProg) fileProg.style.display = 'none';
+                        transferBox.style.gap = '0';
                     }
                 }
             }
@@ -758,34 +894,42 @@
         if(box) { box.appendChild(sysDiv); box.scrollTop = box.scrollHeight; }
     }
 
-    // --- Sending Logic (Text & Staged File) ---
+    // --- Sending Logic ---
     async function sendMessage() {
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
         if (!dc || dc.readyState !== 'open') return;
 
+        const currentReplyData = activeReply ? { id: activeReply.id, nick: activeReply.nick, text: activeReply.text } : null;
+
         if (text) {
             const msgId = 'msg-' + Date.now();
-            dc.send(JSON.stringify({ type: 'msg', nick: sessionNickname, text: text, id: msgId }));
-            renderMessage(text, 'mine', sessionNickname, msgId);
-            input.value = ''; input.focus();
+            dc.send(JSON.stringify({ type: 'msg', nick: sessionNickname, text: text, id: msgId, replyTo: currentReplyData }));
+            renderMessage(text, 'mine', sessionNickname, msgId, currentReplyData);
+            
+            input.value = ''; 
+            input.style.height = '44px'; // Reset height
+            input.style.overflowY = 'hidden'; // Reset overflow
+            input.focus();
+            cancelReply();
         }
 
         if (stagedFile) {
             if (isSendingFile) { alert("Уже идет передача файла"); return; }
             const fileToSend = stagedFile;
             cancelStagedFile();
-            await sendFileCore(fileToSend);
+            await sendFileCore(fileToSend, currentReplyData);
+            cancelReply();
         }
     }
 
-    async function sendFileCore(file) {
+    async function sendFileCore(file, replyData) {
         if (file.size > 50 * 1024 * 1024) { alert("Ограничение 50MB"); return; }
         isSendingFile = true; const btnAttach = document.getElementById('btn-attach'); btnAttach.classList.add('sending');
         const fileId = Date.now().toString(); const safeName = sanitizeHTML(file.name);
 
-        dc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: safeName, size: file.size, mime: file.type, nick: sessionNickname }));
-        renderFileMessage(safeName, file.size, 'mine', sessionNickname, `msg-${fileId}`);
+        dc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: safeName, size: file.size, mime: file.type, nick: sessionNickname, replyTo: replyData }));
+        renderFileMessage(safeName, file.size, 'mine', sessionNickname, `msg-${fileId}`, replyData);
 
         const arrayBuffer = await file.arrayBuffer(); let offset = 0;
         const sendNextChunk = () => {
@@ -798,8 +942,6 @@
                 dc.send(JSON.stringify({ type: 'file-eof', id: fileId })); 
                 isSendingFile = false; 
                 btnAttach.classList.remove('sending'); 
-                
-                // Создаем превью из локального файла
                 const localUrl = URL.createObjectURL(file);
                 markFileComplete(`msg-${fileId}`, localUrl, file.type); 
             }
@@ -807,10 +949,55 @@
         sendNextChunk();
     }
 
+    // --- Voice Recording Logic ---
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+
+    async function toggleVoiceRecord() {
+        const btnVoice = document.getElementById('btn-voice');
+        
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = e => { 
+                    if (e.data.size > 0) audioChunks.push(e.data); 
+                };
+                
+                mediaRecorder.onstop = async () => {
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    // Создаем файл с понятным именем для отображения в цитатах
+    const fakeFile = new File([audioBlob], `Голосовое сообщение`, { type: 'audio/webm' });
+    
+    const currentReplyData = activeReply ? { id: activeReply.id, nick: activeReply.nick, text: activeReply.text } : null;
+    await sendFileCore(fakeFile, currentReplyData);
+    cancelReply();
+};
+                
+                mediaRecorder.start();
+                isRecording = true;
+                btnVoice.classList.add('recording');
+            } catch (err) {
+                sysLog("Ошибка: Нет доступа к микрофону.", true);
+            }
+        } else {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                // Отключаем микрофон, чтобы не горел индикатор в браузере
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+            isRecording = false;
+            btnVoice.classList.remove('recording');
+        }
+    }
+
     // --- Drag & Drop / Staging UI ---
     function updateStagedUI() {
         const bar = document.getElementById('staged-file-bar'); const nameSpan = document.getElementById('staged-file-name'); const btn = document.getElementById('btn-attach');
-        if (stagedFile) { bar.classList.add('active'); nameSpan.innerText = `Прикреплен: ${stagedFile.name}`; btn.classList.add('active'); }
+        if (stagedFile) { bar.classList.add('active'); nameSpan.innerText = stagedFile.name; btn.classList.add('active'); }
         else { bar.classList.remove('active'); nameSpan.innerText = ''; btn.classList.remove('active'); }
     }
     
@@ -830,11 +1017,30 @@
 
     // --- Inputs Event Listeners ---
     document.getElementById('join-code-input').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
-    document.getElementById('msg-input').addEventListener('keydown', function(e) { 
+    
+    // Smart Textarea logic
+    const msgInput = document.getElementById('msg-input');
+    msgInput.addEventListener('keydown', function(e) { 
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } 
     });
-    document.getElementById('msg-input').addEventListener('input', () => {
-        if (dc && dc.readyState === 'open') { const now = Date.now(); if (now - lastTypingTime > 1500) { dc.send('__TYPING__'); lastTypingTime = now; } }
+    msgInput.addEventListener('input', function() {
+        // Auto-height
+        this.style.height = '44px';
+        let newHeight = Math.min(this.scrollHeight, 120);
+        this.style.height = newHeight + 'px';
+        
+        // overflow-y control
+        if (this.scrollHeight > 120) {
+            this.style.overflowY = 'auto';
+        } else {
+            this.style.overflowY = 'hidden';
+        }
+        
+        // Typing indicator
+        if (dc && dc.readyState === 'open') { 
+            const now = Date.now(); 
+            if (now - lastTypingTime > 1500) { dc.send('__TYPING__'); lastTypingTime = now; } 
+        }
     });
 
 </script>
