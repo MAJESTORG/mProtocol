@@ -1,6 +1,6 @@
 # 🔗 [mProtocol](https://majestorg.github.io/mProtocol/)
 > [!IMPORTANT] 
-> Вышел [Release V2](https://github.com/MAJESTORG/mProtocol/releases/tag/New_Release)
+> Вышел [Release v2.5](https://github.com/MAJESTORG/mProtocol/releases/tag/Release_v2.5)
 
 ---
 
@@ -9,9 +9,9 @@
   <tr>
     <td width="50%" valign="top">
       <h2>⚡ О проекте</h2>
-      <p><b>mProtocol</b> — это приватный мессенджер, построенный на технологии WebRTC.</p>
+      <p><b>mProtocol</b> — это приватный веб-мессенджер, построенный на технологии WebRTC.</p>
       <p align="left">
-        <img src="https://img.shields.io/badge/Version-2.2-success" alt="Status"> 
+        <img src="https://img.shields.io/badge/Version-2.5-success" alt="Status"> 
         <img src="https://img.shields.io/badge/Status-Stable-blue" alt="Architecture">
         <img src="https://img.shields.io/badge/Tech-WebRTC-orange" alt="Security">
       </p>
