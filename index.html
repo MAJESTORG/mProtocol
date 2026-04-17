@@ -444,7 +444,11 @@
         try {
             const response = await fetch(`${SIGNALING_SERVER}/ice-config`);
             if (response.ok) {
-                rtcConfig = await response.json();
+                const data = await response.json();
+                // Защита: перезаписываем rtcConfig только если пришел реальный массив
+                if (data && data.iceServers && Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+                    rtcConfig = data;
+                }
             } 
         } catch (err) { console.error("mProtocol ICE Fetch Error", err); }
     }
