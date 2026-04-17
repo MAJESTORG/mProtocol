@@ -6,7 +6,7 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 
-// Разрешаем CORS, чтобы браузер мог получить конфиг и подключить сокеты
+// Разрешаем CORS
 app.use(cors());
 
 const io = new Server(server, {
@@ -19,33 +19,22 @@ const io = new Server(server, {
     transports: ['websocket', 'polling']
 });
 
-// Проверка работоспособности (для Render)
+// Проверка работоспособности
 app.get('/', (req, res) => {
     res.send('mProtocol Server is running');
 });
 
-// Эндпоинт для получения ICE конфигурации (TURN серверы)
-app.get('/ice-config', (req, res) => {
-    res.json({
-        iceServers: [
-            { urls: "stun:stun.relay.metered.ca:80" },
-            {
-                urls: "turn:openrelay.metered.ca:80",
-                username: process.env.TURN_USER,
-                credential: process.env.TURN_PASS
-            },
-            {
-                urls: "turn:openrelay.metered.ca:443",
-                username: process.env.TURN_USER,
-                credential: process.env.TURN_PASS
-            },
-            {
-                urls: "turn:openrelay.metered.ca:443?transport=tcp",
-                username: process.env.TURN_USER,
-                credential: process.env.TURN_PASS
-            }
-        ]
-    });
+// Эндпоинт для получения ICE конфигурации через REST API Metered
+app.get('/ice-config', async (req, res) => {
+    try {
+        const apiKey = process.env.METERED_API_KEY;
+        const response = await fetch(`https://mprotocol.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
+        const iceServers = await response.json();
+        res.json({ iceServers });
+    } catch (error) {
+        console.error('Error fetching ICE config:', error);
+        res.status(500).json({ error: 'Failed to fetch ICE configuration' });
+    }
 });
 
 const rooms = new Map();
@@ -89,8 +78,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Запуск сервера на порту, который выдает Render, или на 3000 локально
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
