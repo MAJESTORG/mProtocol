@@ -28,12 +28,25 @@ app.get('/', (req, res) => {
 app.get('/ice-config', async (req, res) => {
     try {
         const apiKey = process.env.METERED_API_KEY;
+        
+        if (!apiKey) {
+            console.error('METERED_API_KEY is missing');
+            return res.status(500).json({ error: 'API key is missing on server' });
+        }
+
         const response = await fetch(`https://mprotocol.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
+        
+        // Проверяем, что Metered ответил статусом 200 OK, а не ошибкой
+        if (!response.ok) {
+            console.error(`Metered API Error: ${response.status} ${response.statusText}`);
+            return res.status(response.status).json({ error: 'Failed to fetch TURN credentials' });
+        }
+
         const iceServers = await response.json();
         res.json({ iceServers });
     } catch (error) {
         console.error('Error fetching ICE config:', error);
-        res.status(500).json({ error: 'Failed to fetch ICE configuration' });
+        res.status(500).json({ error: 'Internal server error while fetching ICE configuration' });
     }
 });
 
