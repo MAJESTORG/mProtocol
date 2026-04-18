@@ -192,10 +192,22 @@
         .msg { word-break: break-word; overflow-wrap: anywhere; max-width: 100%; line-height: 1.4; }
         .msg b { font-weight: 700; }
         .msg i { font-style: italic; }
-        .chat-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; font-weight: 500; transition: opacity 0.2s; }
-        .mine .chat-link { color: var(--bg-dark); opacity: 0.8; }
-        .theirs .chat-link { color: var(--accent); opacity: 0.9; }
-        .chat-link:hover { opacity: 1; }
+        /* Синяя ссылка для обеих тем */
+/* Единый стиль для всех ссылок в чате */
+.chat-link { 
+    color: #007aff !important; /* Насыщенный синий цвет */
+    text-decoration: underline; 
+    text-underline-offset: 3px; 
+    font-weight: 600; 
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Эффект при наведении */
+.chat-link:hover { 
+    opacity: 0.7 !important;
+    text-decoration: none;
+}
 
         /* Quote / Reply Block inside Message */
         .quote-block { border-left: 2px solid var(--glass-highlight); padding-left: 10px; margin-bottom: 8px; font-size: 0.85rem; opacity: 0.8; display: flex; flex-direction: column; overflow-wrap: anywhere; }
@@ -386,7 +398,7 @@
 
     <div id="screen-chat" class="screen chat-container">
         <div id="messages">
-            <div class="msg system">Соединение установлено<br>E2EE канал активен</div>
+            <div class="msg system">Соединение установлено<br>P2P канал активен</div>
         </div>
         <div class="chat-input-wrapper">
             <div id="staged-file-bar" class="staged-bar">
@@ -787,7 +799,12 @@
         replyBtn.className = 'btn-reply-msg';
         replyBtn.title = "Ответить";
         replyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>';
-        replyBtn.onclick = () => initiateReply(msgId, nick || "Вы", snippetForReply || "Файл");
+        replyBtn.onclick = () => {
+    // Если никнейм пуст, смотрим на тип сообщения
+    const placeholder = (sender === 'mine') ? "Вы" : "Собеседник";
+    const displayName = nick ? nick : placeholder;
+    initiateReply(msgId, displayName, snippetForReply || "Файл");
+};
         
         if (sender === 'mine') metaDiv.appendChild(replyBtn);
 
