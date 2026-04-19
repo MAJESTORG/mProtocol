@@ -645,8 +645,9 @@
         btn.disabled = true; btn.innerText = "Запрос ключей...";
         await fetchIceConfig(); 
         btn.innerText = "Подключение..."; connectSocket(); isHost = false; currentRoomId = code;
+        setupWebRTC(false);
         socket.emit('join-room', code);
-        socket.on('join-success', () => { setupWebRTC(false); });
+        socket.on('join-success', () => { });
         socket.on('error', (msg) => { alert(msg || "Неверный код"); btn.disabled = false; btn.innerText = "Установить связь"; socket.disconnect(); socket = null; updateStatusUI('offline'); });
     }
 
