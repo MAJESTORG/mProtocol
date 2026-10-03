@@ -342,7 +342,7 @@
                 <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 <svg id="icon-sun" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             </button>
-            <button id="mute-btn" class="icon-btn" onclick="toggleMute()" title="Уведомления">
+            <button id="mute-btn" class="icon-btn" onclick="toggleMute()" title="Звук уведомлений">
                 <svg id="icon-sound-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                 <svg id="icon-sound-off" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="1" x2="1" y2="23"></line><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             </button>
@@ -360,7 +360,7 @@
     <div id="screen-home" class="screen active" style="justify-content: center;">
         <div class="title-block">
             <h2>mProtocol</h2>
-            <p>Прямое P2P соединение.<br>Трафик не проходит через сервер.</p>
+            <p>Прямое P2P соединение.<br>Время инициализации первого запуска — до 1 мин.</p>
         </div>
         <input type="text" id="nickname-input" class="input-text" placeholder="Никнейм" maxlength="16" autocomplete="off">
         <button class="btn btn-primary" onclick="initHostSession()">
@@ -481,27 +481,41 @@
 
     // --- Helpers ---
     function sanitizeHTML(str) {
-        if (!str) return '';
-        const temp = document.createElement('div');
-        temp.textContent = str;
-        return temp.innerHTML;
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    const MSG_ID_RE = /^msg-[A-Za-z0-9-]{1,64}$/;
+    const FILE_ID_RE = /^[A-Za-z0-9-]{1,64}$/;
+    const PREVIEW_IMAGE_RE = /^image\/(png|jpeg|gif|webp)$/;
+
+    // Всё, что пришло от собеседника, считаем недоверенным
+    function normalizeReply(r) {
+        if (!r || typeof r !== 'object') return null;
+        return {
+            id: typeof r.id === 'string' ? r.id.slice(0, 80) : '',
+            nick: typeof r.nick === 'string' ? r.nick.slice(0, 64) : '',
+            text: typeof r.text === 'string' ? r.text.slice(0, 200) : ''
+        };
     }
 
     function formatMarkdown(str) {
         if (!str) return '';
-        let html = sanitizeHTML(str);
-        
-        // Auto-Links
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        html = html.replace(urlRegex, function(url) {
-            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-link">${url}</a>`;
-        });
-
-        // Markdown
-        html = html.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-        html = html.replace(/\*([^*]+)\*/g, '<i>$1</i>');
-        html = html.replace(/\n/g, '<br>');
-        return html;
+        // split с capture-группой: нечётные элементы — ссылки, чётные — обычный текст
+        const parts = String(str).split(/(https?:\/\/[^\s*]+)/g);
+        return parts.map((part, i) => {
+            const safe = sanitizeHTML(part);
+            if (i % 2 === 1) {
+                return `<a href="${safe}" target="_blank" rel="noopener noreferrer" class="chat-link">${safe}</a>`;
+            }
+            return safe
+                .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+                .replace(/\*([^*]+)\*/g, '<i>$1</i>')
+                .replace(/\n/g, '<br>');
+        }).join('');
     }
 
     let isAppHidden = false;
@@ -521,15 +535,19 @@
         }
     }
 
-    let isMuted = false;
+    let isMuted = false; // по умолчанию звук включен
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
-    function toggleMute() {
-        isMuted = !isMuted;
+    function updateMuteIcons() {
         document.getElementById('icon-sound-on').style.display = isMuted ? 'none' : 'block';
         document.getElementById('icon-sound-off').style.display = isMuted ? 'block' : 'none';
+    }
+    function toggleMute() {
+        isMuted = !isMuted;
+        updateMuteIcons();
         if (!isMuted) playNotificationSound();
     }
+    updateMuteIcons();
 
     function playNotificationSound() {
         if (isMuted) return;
@@ -572,7 +590,7 @@
         }, 2000);
     }
 
-    function captureNickname() { sessionNickname = sanitizeHTML(document.getElementById('nickname-input').value.trim()); }
+    function captureNickname() { sessionNickname = document.getElementById('nickname-input').value.trim().slice(0, 32); }
 
     function navTo(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -653,7 +671,10 @@
 
     function cancelSession() {
         if (socket) { socket.disconnect(); socket = null; }
-        if (pc) { pc.close(); pc = null; }
+        if (dc) { dc.onopen = dc.onclose = dc.onmessage = null; }
+        if (pc) { pc.oniceconnectionstatechange = null; pc.close(); pc = null; }
+        dc = null; receiveBuffer = []; receiveMeta = null; receivedSize = 0; isSendingFile = false;
+        document.getElementById('btn-attach').classList.remove('active', 'sending');
         if (pingInterval) clearInterval(pingInterval);
         if (statsInterval) clearInterval(statsInterval);
         activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = [];
@@ -664,6 +685,7 @@
         
         // Сброс аудио если шла запись
         if (isRecording && mediaRecorder) {
+            mediaRecorder.onstop = null; // иначе запись уйдёт в уже закрытый канал
             mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(track => track.stop());
             isRecording = false; document.getElementById('btn-voice').classList.remove('recording');
         }
@@ -690,6 +712,10 @@
         dc.onmessage = (e) => {
             if (typeof e.data !== 'string') {
                 if (!receiveMeta) return;
+                if (receivedSize + e.data.byteLength > receiveMeta.size) {
+                    sysLog("Ошибка: файл больше заявленного размера.", true);
+                    receiveBuffer = []; receiveMeta = null; receivedSize = 0; return;
+                }
                 receiveBuffer.push(e.data); receivedSize += e.data.byteLength;
                 updateFileProgress(`msg-${receiveMeta.id}`, Math.min(100, Math.round((receivedSize / receiveMeta.size) * 100)));
                 return;
@@ -704,9 +730,15 @@
             
             try {
                 const payload = JSON.parse(e.data);
+                if (!payload || typeof payload !== 'object') return;
+                const nick = typeof payload.nick === 'string' ? payload.nick.slice(0, 64) : '';
+                const replyTo = normalizeReply(payload.replyTo);
+
                 if (payload.type === 'msg') {
-                    renderMessage(payload.text, 'theirs', payload.nick, payload.id, payload.replyTo);
-                    if (payload.id && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'ack', id: payload.id }));
+                    if (typeof payload.text !== 'string' || payload.text.length > 10000) return;
+                    const msgId = (typeof payload.id === 'string' && MSG_ID_RE.test(payload.id)) ? payload.id : null;
+                    renderMessage(payload.text, 'theirs', nick, msgId, replyTo);
+                    if (msgId && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'ack', id: msgId }));
                 } else if (payload.type === 'ack') {
                     const ackSpan = document.getElementById(`ack-${payload.id}`);
                     if (ackSpan) {
@@ -714,9 +746,17 @@
                         ackSpan.title = 'Доставлено на устройство собеседника';
                     }
                 } else if (payload.type === 'file-meta') {
-                    receiveBuffer = []; receiveMeta = payload; receivedSize = 0;
-                    renderFileMessage(payload.name, payload.size, 'theirs', payload.nick, `msg-${payload.id}`, payload.replyTo);
-                    playNotificationSound(); triggerNativeAlert("Новый файл", payload.name);
+                    if (typeof payload.id !== 'string' || !FILE_ID_RE.test(payload.id)) return;
+                    if (typeof payload.name !== 'string' || !Number.isFinite(payload.size) || payload.size < 0 || payload.size > MAX_FILE_SIZE) return;
+                    const meta = {
+                        id: payload.id,
+                        name: payload.name.slice(0, 255),
+                        size: payload.size,
+                        mime: typeof payload.mime === 'string' ? payload.mime.slice(0, 100) : ''
+                    };
+                    receiveBuffer = []; receiveMeta = meta; receivedSize = 0;
+                    renderFileMessage(meta.name, meta.size, 'theirs', nick, `msg-${meta.id}`, replyTo);
+                    playNotificationSound(); triggerNativeAlert("Новый файл", meta.name);
                 } else if (payload.type === 'file-eof') {
                     if (!receiveMeta || receiveMeta.id !== payload.id) return;
                     const blob = new Blob(receiveBuffer, { type: receiveMeta.mime });
@@ -724,11 +764,14 @@
                     markFileComplete(`msg-${receiveMeta.id}`, url, receiveMeta.mime);
                     receiveBuffer = []; receiveMeta = null; receivedSize = 0;
                 }
-            } catch(err) {}
+           } catch(err) {
+    console.error('mProtocol: ошибка обработки входящих данных', err);
+}
         };
     }
 
     function handleConnectionSuccess() {
+        if (isConnected) return;
         isConnected = true; updateStatusUI('connected'); navTo('screen-chat');
         requestNotificationPermission();
         pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${Date.now()}`); }, 2000);
@@ -776,7 +819,7 @@
 
     // Init Reply State
     function initiateReply(msgId, nick, snippet) {
-        activeReply = { id: msgId, nick: nick, text: snippet };
+        activeReply = { id: msgId, nick: nick, text: String(snippet).slice(0, 100) };
         document.getElementById('reply-preview-bar').classList.add('active');
         document.getElementById('reply-preview-nick').innerText = nick ? `ОТВЕТ: ${nick}` : 'ОТВЕТ';
         document.getElementById('reply-preview-text').innerText = snippet;
@@ -846,7 +889,7 @@
         wrapperDiv.appendChild(msgDiv); box.appendChild(wrapperDiv); box.scrollTop = box.scrollHeight;
 
         if (sender === 'theirs') {
-            playNotificationSound(); triggerNativeAlert(nick || "mProtocol", sanitizeHTML(text));
+            playNotificationSound(); triggerNativeAlert(nick || "mProtocol", String(text).slice(0, 100));
             document.getElementById('typing-label').style.height = '0'; document.getElementById('typing-label').style.opacity = '0';
             document.getElementById('status-indicator').classList.remove('typing'); document.getElementById('status-label').style.display = 'block';
         }
@@ -863,18 +906,27 @@
             <div class="file-transfer-box">
                 <div class="file-info">
                     <div class="file-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></div>
-                    <div class="file-details"><span class="file-name" title="${name}">${name}</span><span class="file-size">${formatBytes(size)}</span></div>
+                    <div class="file-details"><span class="file-name"></span><span class="file-size"></span></div>
                 </div>
-                <div class="file-progress-container"><div class="file-progress-fill" id="prog-${msgId}"></div></div>
-                <div id="preview-container-${msgId}"></div>
-                <a href="#" class="btn-download" id="dl-${msgId}" download="${name}">Скачать</a>
+                <div class="file-progress-container"><div class="file-progress-fill"></div></div>
+                <div class="preview-container"></div>
+                <a href="#" class="btn-download">Скачать</a>
             </div>`;
+        // Недоверенные значения (имя файла, id) — только через DOM-свойства
+        const nameEl = msgDiv.querySelector('.file-name'); nameEl.textContent = name; nameEl.title = name;
+        msgDiv.querySelector('.file-size').textContent = formatBytes(size);
+        msgDiv.querySelector('.file-progress-fill').id = `prog-${msgId}`;
+        msgDiv.querySelector('.preview-container').id = `preview-container-${msgId}`;
+        const dlBtn = msgDiv.querySelector('.btn-download'); dlBtn.id = `dl-${msgId}`; dlBtn.download = name;
         wrapperDiv.appendChild(msgDiv); box.appendChild(wrapperDiv); box.scrollTop = box.scrollHeight;
     }
 
     function updateFileProgress(msgId, percent) { const prog = document.getElementById(`prog-${msgId}`); if (prog) prog.style.width = `${percent}%`; }
 
     function markFileComplete(msgId, objectUrl, mimeType) {
+        // если пользователь был внизу чата — после появления превью доскроллим до конца
+        const msgBox = document.getElementById('messages');
+        const stickToBottom = msgBox.scrollHeight - msgBox.scrollTop - msgBox.clientHeight < 200;
         const prog = document.getElementById(`prog-${msgId}`); if (prog) prog.style.background = 'var(--text-muted)'; 
         if (objectUrl) {
             activeObjectUrls.push(objectUrl); const btn = document.getElementById(`dl-${msgId}`);
@@ -882,10 +934,11 @@
                 btn.href = objectUrl; btn.style.display = 'block';
                 const previewContainer = document.getElementById(`preview-container-${msgId}`);
                 if (previewContainer) {
-                    if (mimeType && mimeType.startsWith('image/')) {
+                    if (typeof mimeType === 'string' && PREVIEW_IMAGE_RE.test(mimeType)) {
                         const link = document.createElement('a');
-                        link.href = objectUrl; link.target = "_blank"; link.title = "Открыть оригинал"; link.className = "image-preview-link";
+                        link.href = objectUrl; link.target = "_blank"; link.rel = "noopener noreferrer"; link.title = "Открыть оригинал"; link.className = "image-preview-link";
                         const img = document.createElement('img'); img.src = objectUrl; img.className = 'image-preview';
+                        img.onload = () => { if (stickToBottom) msgBox.scrollTop = msgBox.scrollHeight; };
                         link.appendChild(img); previewContainer.appendChild(link);
                     } else if (mimeType && (mimeType.startsWith('audio/ogg') || mimeType.startsWith('audio/webm') || mimeType.startsWith('audio/mp3') || mimeType.startsWith('audio/wav'))) {
                         const audio = document.createElement('audio');
@@ -904,6 +957,7 @@
                         if (fileInfo) fileInfo.style.display = 'none';
                         if (fileProg) fileProg.style.display = 'none';
                         transferBox.style.gap = '0';
+                        if (stickToBottom) msgBox.scrollTop = msgBox.scrollHeight;
                     }
                 }
             }
@@ -925,7 +979,7 @@
         const currentReplyData = activeReply ? { id: activeReply.id, nick: activeReply.nick, text: activeReply.text } : null;
 
         if (text) {
-            const msgId = 'msg-' + Date.now();
+            const msgId = 'msg-' + crypto.randomUUID();
             dc.send(JSON.stringify({ type: 'msg', nick: sessionNickname, text: text, id: msgId, replyTo: currentReplyData }));
             renderMessage(text, 'mine', sessionNickname, msgId, currentReplyData);
             
@@ -946,12 +1000,14 @@
     }
 
     async function sendFileCore(file, replyData) {
-        if (file.size > 50 * 1024 * 1024) { alert("Ограничение 50MB"); return; }
+        if (!dc || dc.readyState !== 'open') return;
+        if (isSendingFile) { sysLog("Дождитесь окончания текущей передачи.", true); return; }
+        if (file.size > MAX_FILE_SIZE) { alert("Ограничение 50MB"); return; }
         isSendingFile = true; const btnAttach = document.getElementById('btn-attach'); btnAttach.classList.add('sending');
-        const fileId = Date.now().toString(); const safeName = sanitizeHTML(file.name);
+        const fileId = crypto.randomUUID(); const fileName = file.name.slice(0, 255);
 
-        dc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: safeName, size: file.size, mime: file.type, nick: sessionNickname, replyTo: replyData }));
-        renderFileMessage(safeName, file.size, 'mine', sessionNickname, `msg-${fileId}`, replyData);
+        dc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: fileName, size: file.size, mime: file.type, nick: sessionNickname, replyTo: replyData }));
+        renderFileMessage(fileName, file.size, 'mine', sessionNickname, `msg-${fileId}`, replyData);
 
         const arrayBuffer = await file.arrayBuffer(); let offset = 0;
         const sendNextChunk = () => {
@@ -1037,9 +1093,33 @@
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { stagedFile = e.dataTransfer.files[0]; updateStagedUI(); }
     });
 
+    // Вставка картинки из буфера (Ctrl+V) -> попадает в staged, отправка как обычно (Enter)
+    document.addEventListener('paste', (e) => {
+        if (!chatScreen.classList.contains('active')) return;
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const blob = item.getAsFile();
+                if (!blob) continue;
+                const ext = item.type.split('/')[1].replace('jpeg', 'jpg').replace(/[^a-z0-9]/gi, '') || 'png';
+                stagedFile = new File([blob], `image-${Date.now()}.${ext}`, { type: item.type });
+                updateStagedUI();
+                e.preventDefault();
+                document.getElementById('msg-input').focus();
+                return;
+            }
+        }
+        // обычный текст не трогаем — вставится как раньше
+    });
+
     // --- Inputs Event Listeners ---
     document.getElementById('join-code-input').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
     
+    document.getElementById('join-code-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !document.getElementById('btn-join').disabled) { e.preventDefault(); joinSession(); }
+    });
+
     // Smart Textarea logic
     const msgInput = document.getElementById('msg-input');
     msgInput.addEventListener('keydown', function(e) { 
