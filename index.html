@@ -105,7 +105,7 @@
         .icon-btn { background: rgba(127, 127, 127, 0.1); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); padding: 8px; border-radius: 50%; width: 36px; height: 36px; }
         .icon-btn:hover { color: var(--text-main); transform: scale(1.05); background: rgba(127, 127, 127, 0.2); border-color: var(--glass-highlight); }
 
-        .status-badge { display: flex; align-items: center; gap: 8px; background: rgba(127, 127, 127, 0.1); padding: 6px 14px; border-radius: 30px; border: 1px solid var(--glass-border); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; min-width: 100px; cursor: help; }
+        .status-badge { display: flex; align-items: center; gap: 8px; background: rgba(127, 127, 127, 0.1); padding: 6px 14px; border-radius: 30px; border: 1px solid var(--glass-border); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.05em; min-width: 100px; cursor: pointer; }
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 8px var(--danger); transition: all 0.3s; }
         .status-dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); }
         .status-dot.waiting { background: var(--warning); box-shadow: 0 0 10px var(--warning); animation: pulse 1.5s infinite; }
@@ -114,6 +114,26 @@
         .status-text-group { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 14px; }
         #status-label { transition: opacity 0.2s; }
         .typing-label { font-size: 0.55rem; color: var(--accent); opacity: 0; height: 0; overflow: hidden; transition: all 0.2s; text-transform: lowercase; font-style: italic; }
+
+        /* Connection popover */
+        .status-wrap { position: relative; z-index: 30; }
+        .conn-pop { position: absolute; top: calc(100% + 10px); right: 0; width: min(250px, calc(100vw - 24px)); padding: 14px 16px; border-radius: 16px; background: var(--bg-dark); border: 1px solid var(--glass-border); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3); opacity: 0; visibility: hidden; transform: translateY(-6px) scale(0.98); transform-origin: top right; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.2s; }
+        .conn-pop.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s; }
+        .conn-pop::before { content: ''; position: absolute; top: -6px; right: 48px; width: 10px; height: 10px; background: var(--bg-dark); border-left: 1px solid var(--glass-border); border-top: 1px solid var(--glass-border); transform: rotate(45deg); border-radius: 2px 0 0 0; }
+        .conn-pop::after { content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+        .conn-pop [hidden] { display: none !important; }
+        .conn-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .conn-title { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; letter-spacing: -0.01em; }
+        .conn-title svg { flex-shrink: 0; color: var(--success); }
+        .conn-timer { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .conn-rows { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 8px; }
+        .conn-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.75rem; }
+        .conn-row span { color: var(--text-muted); }
+        .conn-row b { font-weight: 500; font-family: var(--font-mono); font-size: 0.7rem; text-align: right; }
+        .conn-val.ok::before, .conn-val.warn::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+        .conn-val.ok::before { background: var(--success); }
+        .conn-val.warn::before { background: var(--warning); }
+        @media (prefers-reduced-motion: reduce) { .conn-pop { transition: none; } }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
         @keyframes pulseFast { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
@@ -327,6 +347,7 @@
     </style>
 </head>
 <body data-theme="dark">
+<script>try{if(localStorage.getItem('mp_theme')==='light')document.body.setAttribute('data-theme','light');}catch(e){}</script>
 
 <div class="ambient-bg">
     <div class="ambient-blob blob-1"></div>
@@ -355,11 +376,27 @@
                 <svg id="icon-sound-off" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="1" x2="1" y2="23"></line><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             </button>
 
-            <div class="status-badge" id="status-badge-container">
-                <div class="status-dot" id="status-indicator"></div>
-                <div class="status-text-group">
-                    <span id="status-label">OFFLINE</span>
-                    <span id="typing-label" class="typing-label">печатает...</span>
+            <div class="status-wrap" id="status-wrap">
+                <div class="status-badge" id="status-badge-container" aria-expanded="false" aria-controls="conn-pop">
+                    <div class="status-dot" id="status-indicator"></div>
+                    <div class="status-text-group">
+                        <span id="status-label">OFFLINE</span>
+                        <span id="typing-label" class="typing-label">печатает...</span>
+                    </div>
+                </div>
+                <div class="conn-pop" id="conn-pop">
+                    <div class="conn-head">
+                        <div class="conn-title">
+                            <svg id="conn-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <span id="conn-title">Нет подключения</span>
+                        </div>
+                        <span class="conn-timer" id="conn-timer" hidden>00:00</span>
+                    </div>
+                    <div class="conn-rows" id="conn-rows" hidden>
+                        <div class="conn-row"><span>Маршрут</span><b id="conn-route" class="conn-val">…</b></div>
+                        <div class="conn-row"><span>Протокол</span><b id="conn-proto">…</b></div>
+                        <div class="conn-row"><span>Шифрование</span><b>DTLS</b></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -483,7 +520,8 @@
     let currentRoomId = null;
     let isHost = false;
     let pingInterval;
-    let statsInterval;
+    let sessionStartTs = null; // Date.now() первого успешного соединения (для плашки)
+    let connInfo = null; // { relay, proto } из getStats (для плашки)
     let isConnected = false;
     let sessionNickname = "";
     let activeObjectUrls = [];
@@ -636,12 +674,17 @@
     }
 
     let currentTheme = 'dark';
-    function toggleTheme() {
-        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-theme', currentTheme);
-        document.getElementById('icon-moon').style.display = currentTheme === 'dark' ? 'block' : 'none';
-        document.getElementById('icon-sun').style.display = currentTheme === 'dark' ? 'none' : 'block';
+    function applyTheme(theme) {
+        currentTheme = theme;
+        document.body.setAttribute('data-theme', theme);
+        document.getElementById('icon-moon').style.display = theme === 'dark' ? 'block' : 'none';
+        document.getElementById('icon-sun').style.display = theme === 'dark' ? 'none' : 'block';
     }
+    function toggleTheme() {
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        try { localStorage.setItem('mp_theme', currentTheme); } catch(e) {}
+    }
+    try { if (localStorage.getItem('mp_theme') === 'light') applyTheme('light'); } catch(e) {}
 
     let typingTimeout = null;
     let lastTypingTime = 0;
@@ -695,18 +738,20 @@
 
     function navToJoin() { captureNickname(); navTo('screen-guest'); setTimeout(() => document.getElementById('join-code-input').focus(), 400); }
 
+    let connState = 'offline';
     function updateStatusUI(state) {
         const dot = document.getElementById('status-indicator');
         const label = document.getElementById('status-label');
         const pingUi = document.getElementById('ping-ui');
-        const badge = document.getElementById('status-badge-container');
 
+        connState = state;
         dot.className = 'status-dot';
         switch(state) {
-            case 'offline': label.innerText = 'OFFLINE'; pingUi.classList.remove('visible'); badge.title = "Нет подключения"; break;
-            case 'waiting': dot.classList.add('waiting'); label.innerText = 'SIGNALING...'; badge.title = "Обмен ключами..."; break;
+            case 'offline': label.innerText = 'OFFLINE'; pingUi.classList.remove('visible'); break;
+            case 'waiting': dot.classList.add('waiting'); label.innerText = 'SIGNALING...'; break;
             case 'connected': dot.classList.add('active'); label.innerText = 'CONNECTED'; pingUi.classList.add('visible'); break;
         }
+        if (connPopOpen) renderConnPop();
     }
 
     // --- WebRTC Logic ---
@@ -748,6 +793,7 @@
         socket.emit('create-room');
         socket.on('room-created', (id) => { currentRoomId = id; document.getElementById('room-code-display').innerText = id; setupWebRTC(true); });
         socket.on('guest-joined', async () => {
+            if (!pc) return;
             const offer = await pc.createOffer(); await pc.setLocalDescription(offer); socket.emit('signal', { roomId: currentRoomId, data: offer });
         });
     }
@@ -765,34 +811,66 @@
         socket.on('error', (msg) => { alert(msg || "Неверный код"); input.value = ''; input.focus(); btn.disabled = false; btn.innerText = "Установить связь"; socket.disconnect(); socket = null; updateStatusUI('offline'); });
     }
 
+    // Остановка записи голоса: гасим микрофон и забываем записанные куски
+    function abortRecording() {
+        if (mediaRecorder) {
+            mediaRecorder.onstop = null; // иначе запись уйдёт в уже закрытый канал
+            mediaRecorder.ondataavailable = null;
+            try { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); } catch(e) {}
+            try { mediaRecorder.stream.getTracks().forEach(track => track.stop()); } catch(e) {}
+        }
+        mediaRecorder = null; audioChunks = []; isRecording = false;
+        document.getElementById('btn-voice').classList.remove('recording');
+    }
+
+    function stopSessionTimers() { clearInterval(pingInterval); pingInterval = null; }
+
+    // Закрывает канал и соединение, сбрасывает буферы передачи файлов и данные плашки
+    function closePeerConnection() {
+        if (dc) { dc.onopen = dc.onclose = dc.onmessage = null; try { dc.close(); } catch(e) {} dc = null; }
+        if (pc) { pc.oniceconnectionstatechange = null; pc.onicecandidate = null; pc.ondatachannel = null; try { pc.close(); } catch(e) {} pc = null; }
+        receiveBuffer = []; receiveMeta = null; receivedSize = 0; isSendingFile = false;
+        document.getElementById('btn-attach').classList.remove('active', 'sending');
+        sessionStartTs = null; connInfo = null; closeConnPop();
+    }
+
+    // Остатки в интерфейсе: черновик, цитата, "печатает", системное уведомление, код комнаты
+    function wipeSessionTraces() {
+        const mi = document.getElementById('msg-input');
+        mi.value = ''; mi.style.height = '44px'; mi.style.overflowY = 'hidden';
+        document.getElementById('reply-preview-nick').innerText = 'ОТВЕТ';
+        document.getElementById('reply-preview-text').innerText = '';
+        clearTimeout(typingTimeout); lastTypingTime = 0;
+        document.getElementById('typing-label').style.height = '0'; document.getElementById('typing-label').style.opacity = '0';
+        document.getElementById('status-label').style.display = 'block';
+        if (lastNotification) { try { lastNotification.close(); } catch(e) {} lastNotification = null; }
+        unreadCount = 0; updateTitleBadge();
+        document.getElementById('room-code-display').innerText = '------';
+    }
+
     function cancelSession() {
         if (socket) { socket.disconnect(); socket = null; }
-        if (dc) { dc.onopen = dc.onclose = dc.onmessage = null; }
-        if (pc) { pc.oniceconnectionstatechange = null; pc.close(); pc = null; }
-        dc = null; receiveBuffer = []; receiveMeta = null; receivedSize = 0; isSendingFile = false;
-        document.getElementById('btn-attach').classList.remove('active', 'sending');
-        if (pingInterval) clearInterval(pingInterval);
-        if (statsInterval) clearInterval(statsInterval);
+        closePeerConnection();
+        stopSessionTimers();
+        abortRecording();
         activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = [];
         currentRoomId = null; isConnected = false; updateStatusUI('offline'); navTo('screen-home');
         document.getElementById('join-code-input').value = ''; document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
         document.getElementById('messages').innerHTML = '<div class="msg system">Соединение установлено<br>E2EE канал активен</div>';
         cancelReply(); cancelStagedFile();
-        
-        // Сброс аудио если шла запись
-        if (isRecording && mediaRecorder) {
-            mediaRecorder.onstop = null; // иначе запись уйдёт в уже закрытый канал
-            mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            isRecording = false; document.getElementById('btn-voice').classList.remove('recording');
-        }
+        wipeSessionTraces();
     }
+
+    // Закрытие/перезагрузка/уход вкладки в bfcache: рвём соединение сразу и чистим всё
+    window.addEventListener('pagehide', () => { try { cancelSession(); } catch(e) {} });
 
     function setupWebRTC(isInitiator) {
         pc = new RTCPeerConnection(rtcConfig);
-        pc.onicecandidate = (e) => { if (e.candidate) socket.emit('signal', { roomId: currentRoomId, data: e.candidate }); };
+        pc.onicecandidate = (e) => { if (e.candidate && socket) socket.emit('signal', { roomId: currentRoomId, data: e.candidate }); };
         pc.oniceconnectionstatechange = () => {
             if(pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') handleConnectionSuccess();
-            else if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') handleConnectionDrop();
+            else if (pc.iceConnectionState === 'disconnected') handleConnectionDrop(); // может быть временным
+            else if (pc.iceConnectionState === 'failed') handleConnectionDrop(true);
         };
         if (isInitiator) { dc = pc.createDataChannel("mlink_channel", { ordered: true }); setupDataChannel(); }
         else { pc.ondatachannel = (e) => { dc = e.channel; setupDataChannel(); }; }
@@ -803,7 +881,7 @@
     function setupDataChannel() {
         dc.binaryType = 'arraybuffer';
         dc.onopen = () => { if(!isConnected) handleConnectionSuccess(); };
-        dc.onclose = () => { handleConnectionDrop(); };
+        dc.onclose = () => { handleConnectionDrop(true); };
 
         dc.onmessage = (e) => {
             if (typeof e.data !== 'string') {
@@ -819,8 +897,9 @@
 
             if (e.data.startsWith('__PING__')) { dc.send(e.data.replace('__PING__', '__PONG__')); return; }
             if (e.data.startsWith('__PONG__')) {
-                const timestamp = parseInt(e.data.split(':')[1]);
-                document.getElementById('ping-value').innerText = `${Date.now() - timestamp} ms`; return;
+                const sentAt = Number(e.data.split(':')[1]);
+                const rtt = performance.now() - sentAt;
+                if (Number.isFinite(rtt) && rtt >= 0 && rtt < 60000) document.getElementById('ping-value').innerText = `${Math.round(rtt)} ms`; return;
             }
             if (e.data === '__TYPING__') { showTypingIndicator(); return; }
             
@@ -868,39 +947,100 @@
 
     function handleConnectionSuccess() {
         if (isConnected) return;
-        isConnected = true; updateStatusUI('connected'); navTo('screen-chat');
+        isConnected = true; if (!sessionStartTs) sessionStartTs = Date.now();
+        updateStatusUI('connected'); navTo('screen-chat');
         showSoundHint();
-        pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${Date.now()}`); }, 2000);
-        
-        statsInterval = setInterval(async () => {
-            if (pc && isConnected) {
-                try {
-                    const stats = await pc.getStats();
-                    let connectionType = "Unknown";
-                    let candidateType = "";
-                    stats.forEach(report => {
-                        if (report.type === 'remote-candidate') candidateType = report.candidateType;
-                        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-                            connectionType = (candidateType === 'relay') ? "Server Relay" : "Direct P2P";
-                        }
-                    });
-                    const techInfo = [`Mode: ${connectionType}`, `ICE: ${pc.iceConnectionState}`, `Type: ${candidateType}`].join('\n');
-                    document.getElementById('status-badge-container').title = techInfo;
-                } catch(e){}
-            }
-        }, 5000);
+        document.getElementById('ping-value').innerText = '-- ms';
+        stopSessionTimers();
+        // performance.now(): монотонные часы, не зависят от перевода системного времени
+        pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${performance.now()}`); }, 2000);
+        refreshConnInfo();
 
         if(socket) { socket.disconnect(); socket = null; }
     }
 
-    function handleConnectionDrop() {
-        isConnected = false; clearInterval(pingInterval); clearInterval(statsInterval); updateStatusUI('offline');
-        sysLog("Соединение разорвано.", true);
+    // final=false: временный сбой ICE ('disconnected'), соединение может восстановиться — ничего не закрываем.
+    // final=true: канал закрыт или ICE 'failed' — освобождаем соединение и микрофон.
+    function handleConnectionDrop(final = false) {
+        const wasActive = isConnected;
+        isConnected = false; stopSessionTimers(); updateStatusUI('offline');
+        if (wasActive) sysLog("Соединение разорвано.", true);
         if (isSendingFile || receiveMeta) {
             sysLog("Ошибка: Передача файла прервана.", true); isSendingFile = false; receiveBuffer = []; receiveMeta = null;
             document.getElementById('btn-attach').classList.remove('active', 'sending');
         }
+        if (final) { abortRecording(); closePeerConnection(); }
     }
+
+    // --- Connection popover (плашка статуса) ---
+    const statusWrap = document.getElementById('status-wrap');
+    const statusBadge = document.getElementById('status-badge-container');
+    const connPop = document.getElementById('conn-pop');
+    let connPopOpen = false, connPopTick = null, connPopCloseTimer = null, connPopTicks = 0;
+
+    function formatSessionTime(ms) {
+        const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+        const p = n => String(n).padStart(2, '0');
+        return h ? `${h}:${p(m)}:${p(sec)}` : `${p(m)}:${p(sec)}`;
+    }
+
+    // Маршрут берём из реально выбранной пары кандидатов; relay, если relay хотя бы с одной стороны
+    async function refreshConnInfo() {
+        const p = pc;
+        if (!p || !isConnected) return;
+        try {
+            const stats = await p.getStats();
+            if (p !== pc) return; // сессия успела закрыться
+            const byId = {}; let pair = null;
+            stats.forEach(r => { byId[r.id] = r; });
+            stats.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId && byId[r.selectedCandidatePairId]) pair = byId[r.selectedCandidatePairId]; });
+            if (!pair) stats.forEach(r => { if (r.type === 'candidate-pair' && r.state === 'succeeded' && (r.selected || r.nominated)) pair = r; });
+            if (!pair) return;
+            const local = byId[pair.localCandidateId], remote = byId[pair.remoteCandidateId];
+            connInfo = {
+                relay: !!((local && local.candidateType === 'relay') || (remote && remote.candidateType === 'relay')),
+                proto: String((local && ((local.candidateType === 'relay' && local.relayProtocol) || local.protocol)) || '').toLowerCase()
+            };
+            if (connPopOpen) renderConnPop();
+        } catch(e) {}
+    }
+
+    function renderConnPop() {
+        const on = connState === 'connected';
+        document.getElementById('conn-title').textContent = on ? 'Защищённое соединение' : (connState === 'waiting' ? 'Обмен ключами…' : 'Нет подключения');
+        document.getElementById('conn-lock').toggleAttribute('hidden', !on);
+        document.getElementById('conn-rows').toggleAttribute('hidden', !on);
+        const timer = document.getElementById('conn-timer');
+        timer.toggleAttribute('hidden', !(on && sessionStartTs));
+        if (!on) return;
+        if (sessionStartTs) timer.textContent = formatSessionTime(Date.now() - sessionStartTs);
+        const route = document.getElementById('conn-route');
+        route.textContent = connInfo ? (connInfo.relay ? 'Relay' : 'Напрямую (P2P)') : '…';
+        route.className = 'conn-val' + (connInfo ? (connInfo.relay ? ' warn' : ' ok') : '');
+        document.getElementById('conn-proto').textContent = (connInfo && connInfo.proto) ? connInfo.proto.toUpperCase() : '…';
+    }
+
+    // Пока плашка закрыта — никаких таймеров и опросов; открыта — тик раз в секунду (stats раз в 3 с)
+    function openConnPop() {
+        clearTimeout(connPopCloseTimer);
+        if (connPopOpen) return;
+        connPopOpen = true; connPopTicks = 0;
+        connPop.classList.add('open'); statusBadge.setAttribute('aria-expanded', 'true');
+        renderConnPop(); refreshConnInfo();
+        connPopTick = setInterval(() => { renderConnPop(); if (++connPopTicks % 3 === 0) refreshConnInfo(); }, 1000);
+    }
+    function closeConnPop() {
+        clearTimeout(connPopCloseTimer);
+        if (!connPopOpen) return;
+        connPopOpen = false; clearInterval(connPopTick); connPopTick = null;
+        connPop.classList.remove('open'); statusBadge.setAttribute('aria-expanded', 'false');
+    }
+    // Мышь: по наведению; тач/перо: по тапу
+    statusWrap.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') openConnPop(); });
+    statusWrap.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { clearTimeout(connPopCloseTimer); connPopCloseTimer = setTimeout(closeConnPop, 150); } });
+    statusBadge.addEventListener('click', e => { if (e.pointerType === 'mouse') return; connPopOpen ? closeConnPop() : openConnPop(); });
+    document.addEventListener('pointerdown', e => { if (connPopOpen && !statusWrap.contains(e.target)) closeConnPop(); }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConnPop(); });
 
     // --- File & UI Core ---
     const CHUNK_SIZE = 16384; 
@@ -1107,7 +1247,7 @@
 
         const arrayBuffer = await file.arrayBuffer(); let offset = 0;
         const sendNextChunk = () => {
-            if (dc.readyState !== 'open' || !isSendingFile) return;
+            if (!dc || dc.readyState !== 'open' || !isSendingFile) return;
             if (dc.bufferedAmount > 8 * 1024 * 1024) { setTimeout(sendNextChunk, 100); return; }
             const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE); dc.send(chunk); offset += chunk.byteLength;
             updateFileProgress(`msg-${fileId}`, Math.round((offset / file.size) * 100));
@@ -1142,7 +1282,7 @@
                 };
                 
                 mediaRecorder.onstop = async () => {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); audioChunks = [];
     // Создаем файл с понятным именем для отображения в цитатах
     const fakeFile = new File([audioBlob], `Голосовое сообщение`, { type: 'audio/webm' });
     
