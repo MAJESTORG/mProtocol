@@ -301,6 +301,52 @@
         @keyframes pulseRecord { 0% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 69, 58, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0); } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* Call UI */
+        .icon-btn.call-btn[hidden] { display: none; }
+        /* Кнопка «Позвонить» — действие над чатом, а не настройка приложения: «стеклянная» (полупрозрачная с размытием) без цвета,
+           чтобы не путалась с идущим звонком; чуть заметнее соседних кнопок за счёт светлого текста и рамки. Разделитель от темы и звука */
+        .icon-btn.call-btn { color: var(--text-main); background: rgba(127,127,127,0.2); background: color-mix(in srgb, var(--text-main) 14%, transparent); border-color: var(--glass-highlight); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); margin-right: 6px; position: relative; }
+        .icon-btn.call-btn:hover { transform: scale(1.08); background: rgba(127,127,127,0.3); background: color-mix(in srgb, var(--text-main) 22%, transparent); }
+        .icon-btn.call-btn:active { transform: scale(0.94); }
+        .icon-btn.call-btn::after { content: ''; position: absolute; right: -9px; top: 50%; width: 1px; height: 20px; transform: translateY(-50%); background: var(--glass-border); }
+        .icon-btn.call-btn.in-call { color: var(--danger); border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.1); }
+        .btn-voice.call-locked { opacity: 0.4; }
+        .call-bar { display: none; flex-shrink: 0; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--glass-border); background: rgba(127,127,127,0.05); position: relative; z-index: 20; }
+        .call-bar.visible { display: flex; animation: callBarIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes callBarIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+        @keyframes callRing { 0% { box-shadow: 0 0 0 0 rgba(50,215,75,0.55); } 70%, 100% { box-shadow: 0 0 0 14px rgba(50,215,75,0); } }
+        @keyframes callBreathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.7); opacity: 0.5; } }
+        .call-bar [hidden] { display: none !important; }
+        .call-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--warning); flex-shrink: 0; animation: pulseFast 0.8s infinite; }
+        .call-bar[data-state="active"] .call-dot { background: var(--success); animation: callBreathe 2.4s ease-in-out infinite; box-shadow: 0 0 8px var(--success); }
+        .call-bar[data-state="incoming"] .call-act.accept { animation: callRing 1.6s ease-out infinite; }
+        .call-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .call-status { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .call-sub { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .call-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .call-act { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, filter 0.2s; }
+        .call-act:hover { transform: scale(1.08); filter: brightness(1.1); }
+        .call-act:active { transform: scale(0.94); }
+        .call-act.accept { background: var(--success); color: #050505; }
+        .call-act.end { background: var(--danger); color: #fff; }
+        .call-bar .icon-btn.muted { color: var(--danger); border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.1); }
+        .call-sound-btn { background: var(--text-main); color: var(--bg-dark); border: none; border-radius: 16px; padding: 7px 12px; font-size: 0.7rem; font-weight: 600; cursor: pointer; font-family: var(--font-sans); }
+        /* Настройки звука звонка: поповер переиспользует стиль .conn-pop, но крепится к правому краю панели */
+        .call-pop { right: 12px; width: min(270px, calc(100vw - 24px)); }
+        .call-pop::before { display: none; }
+        .call-opt { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.8rem; cursor: pointer; }
+        .call-opt input { -webkit-appearance: none; appearance: none; width: 34px; height: 20px; border-radius: 10px; background: var(--progress-track); border: 1px solid var(--glass-border); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; outline: none; }
+        .call-opt input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-muted); transition: transform 0.2s, background 0.2s; }
+        .call-opt input:checked { background: var(--success); }
+        .call-opt input:checked::after { transform: translateX(14px); background: #fff; }
+        .call-pop-note { margin-top: 12px; font-size: 0.7rem; line-height: 1.4; color: var(--text-muted); }
+        .call-vol { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; }
+        .call-vol .call-vol-head { display: flex; justify-content: space-between; }
+        .call-vol .call-vol-head b { font-weight: 500; font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+        .call-vol input[type="range"] { width: 100%; accent-color: var(--text-main); cursor: pointer; margin: 0; }
+        .call-pop-sep { height: 1px; background: var(--glass-border); margin: 2px 0; }
+        @media (prefers-reduced-motion: reduce) { .call-dot, .call-bar.visible, .call-bar[data-state="incoming"] .call-act.accept { animation: none; } .call-opt input, .call-opt input::after { transition: none; } }
+
         /* Smart Textarea */
         .chat-input { 
             flex: 1; 
@@ -367,6 +413,7 @@
             </div>
         </div>
         <div class="header-actions">
+            <button id="call-btn" class="icon-btn call-btn" onclick="onCallBtn()" title="Позвонить" aria-label="Позвонить" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></button>
             <button id="theme-btn" class="icon-btn" onclick="toggleTheme()" title="Переключить тему">
                 <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 <svg id="icon-sun" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -446,6 +493,31 @@
     </div>
 
     <div id="screen-chat" class="screen chat-container">
+        <div id="call-bar" class="call-bar" role="status" aria-live="polite">
+            <div class="call-dot" id="call-dot"></div>
+            <div class="call-info">
+                <span class="call-status" id="call-status"></span>
+                <span class="call-sub" id="call-sub"></span>
+            </div>
+            <div class="call-actions">
+                <button id="call-sound" class="call-sound-btn" onclick="resumeRemoteAudio()" hidden>Включить звук</button>
+                <button id="call-settings" class="icon-btn" onclick="toggleCallPop()" title="Настройки звука" aria-label="Настройки звука" aria-expanded="false" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+                <button id="call-mute" class="icon-btn" onclick="toggleCallMute()" title="Выключить микрофон" aria-label="Выключить микрофон" aria-pressed="false" hidden><svg id="icon-call-mic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg><svg id="icon-call-mic-off" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg></button>
+                <button id="call-accept" class="call-act accept" onclick="acceptCall()" title="Принять" aria-label="Принять" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></button>
+                <button id="call-end" class="call-act end" onclick="endCall()" title="Завершить" aria-label="Завершить" hidden><svg style="transform: rotate(135deg);" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></button>
+            </div>
+            <div class="conn-pop call-pop" id="call-pop" role="dialog" aria-label="Настройки звука">
+                <div class="conn-head"><div class="conn-title">Звук звонка</div></div>
+                <div class="conn-rows">
+                    <label class="call-vol" id="call-vol-row"><span class="call-vol-head"><span>Громкость собеседника</span><b id="call-vol-val">100%</b></span><input type="range" id="opt-vol" min="0" max="100" step="5" value="100" oninput="onCallVol()"></label>
+                    <div class="call-pop-sep"></div>
+                    <label class="call-opt"><span>Эхоподавление</span><input type="checkbox" id="opt-aec" onchange="onCallOptChange()"></label>
+                    <label class="call-opt"><span>Шумоподавление</span><input type="checkbox" id="opt-ns" onchange="onCallOptChange()"></label>
+                    <label class="call-opt"><span>Авто-громкость</span><input type="checkbox" id="opt-agc" onchange="onCallOptChange()"></label>
+                </div>
+                <div class="call-pop-note" id="call-pop-note" hidden></div>
+            </div>
+        </div>
         <div id="messages">
             <div class="msg system">Соединение установлено<br>P2P канал активен</div>
         </div>
@@ -523,6 +595,7 @@
     let sessionStartTs = null; // Date.now() первого успешного соединения (для плашки)
     let connInfo = null; // { relay, proto } из getStats (для плашки)
     let isConnected = false;
+    let connUnstable = false; // был временный обрыв ICE ('disconnected'), ждём восстановления
     let sessionNickname = "";
     let activeObjectUrls = [];
 
@@ -572,7 +645,18 @@
     // Непрочитанные в заголовке вкладки + последнее системное уведомление
     let unreadCount = 0, lastNotification = null;
     const baseTitle = document.title;
-    function updateTitleBadge() { document.title = unreadCount ? `(${unreadCount > 99 ? '99+' : unreadCount}) ${baseTitle}` : baseTitle; }
+    // Индикатор звонка в заголовке: идёт звонок — «📞 03:12», входящий — «📞 Входящий звонок» (в фоне мигает), вызов — «📞 Вызов…».
+    // Счётчик непрочитанных остаётся первым: «(2) 📞 03:12 · M-Link».
+    let titleBlink = false;
+    function callTitlePrefix() {
+        try {
+            if (callState === 'active') return `📞 ${formatSessionTime(getCallDuration())} · `;
+            if (callState === 'incoming') return (!document.hidden || titleBlink) ? '📞 Входящий звонок · ' : '';
+            if (callState === 'outgoing') return '📞 Вызов… · ';
+        } catch(e) {}
+        return '';
+    }
+    function updateTitleBadge() { document.title = (unreadCount ? `(${unreadCount > 99 ? '99+' : unreadCount}) ` : '') + callTitlePrefix() + baseTitle; }
 
     document.addEventListener("visibilitychange", () => {
         isAppHidden = document.hidden;
@@ -581,6 +665,7 @@
         if (lastNotification) { try { lastNotification.close(); } catch(e) {} lastNotification = null; }
         if (soundHintPending && isConnected) showSoundHint();
         soundHintPending = false;
+        try { if (callState === 'active') acquireWakeLock(); } catch(e) {} // система снимает Wake Lock при сворачивании вкладки
     });
 
     let notifPromptAsked = false; // спрашиваем не чаще раза за загрузку страницы
@@ -673,6 +758,71 @@
         } catch(e) {}
     }
 
+    // --- Звуки звонка: тот же AudioContext, тот же переключатель звука и та же Smart Sound-логика громкости ---
+    // [вкладка активна, вкладка в фоне]: в активной вкладке тише (звонок виден на панели), в фоне громче
+    const CALL_VOL = { ring: [0.1, 0.3], event: [0.06, 0.2] };
+    function callVol(kind) { return CALL_VOL[kind][isAppHidden ? 1 : 0]; }
+
+    // Мягкий «колокольчик»: основной тон + тихая октава, быстрое затухание
+    function bell(freq, at, dur, vol, out) {
+        const t0 = audioCtx.currentTime + at, dest = out || audioCtx.destination;
+        [[1, 1], [2, 0.25]].forEach(([mul, k]) => {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = 'sine'; o.frequency.setValueAtTime(freq * mul, t0);
+            g.gain.setValueAtTime(0.0001, t0);
+            g.gain.linearRampToValueAtTime(vol * k, t0 + 0.012);
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+            o.connect(g); g.connect(dest);
+            o.start(t0); o.stop(t0 + dur + 0.02);
+        });
+    }
+    // Играем только при выключенном «без звука» и запущенном контексте (иначе ноты накопились бы и прозвучали разом)
+    function withAudio(fn) {
+        if (isMuted) return;
+        try {
+            if (audioCtx.state === 'running') fn();
+            else audioCtx.resume().then(() => { if (audioCtx.state === 'running') fn(); }).catch(() => {});
+        } catch(e) {}
+    }
+
+    const CALL_SOUNDS = {
+        connect: v => { bell(659.25, 0, 0.35, v); bell(987.77, 0.12, 0.45, v); },  // вверх: соединились
+        end:     v => { bell(987.77, 0, 0.3, v); bell(659.25, 0.12, 0.45, v); },   // вниз: звонок завершён
+        fail:    v => { bell(392, 0, 0.3, v); bell(329.63, 0.16, 0.5, v); },       // ниже: отказ / занято / ошибка
+        mute:    v => bell(520, 0, 0.12, v * 0.7),
+        unmute:  v => bell(780, 0, 0.12, v * 0.7)
+    };
+    function playCallSound(name) { const f = CALL_SOUNDS[name]; if (f) withAudio(() => f(callVol('event'))); }
+
+    // Рингтон: мелодия для входящего ('in'), ровные гудки для исходящего ('out'). Играет, пока звонок в этом состоянии;
+    // запускается и останавливается из updateCallUI, поэтому гаснет при любом выходе из состояния. Громкость пересчитывается на каждом цикле.
+    const RING_NOTES = [659.25, 783.99, 987.77, 783.99];
+    let ringKind = null, ringLoopTimer = null, ringBus = null;
+    function ringCycle(kind) {
+        if (!ringBus) { ringBus = audioCtx.createGain(); ringBus.connect(audioCtx.destination); }
+        const v = callVol('ring');
+        if (kind === 'in') { for (let r = 0; r < 2; r++) RING_NOTES.forEach((f, i) => bell(f, r * 0.9 + i * 0.15, 0.4, v, ringBus)); }
+        else bell(440, 0, 0.8, v * 0.5, ringBus);
+    }
+    function startRing(kind) {
+        if (ringKind === kind) return;
+        stopRing(); ringKind = kind;
+        const period = kind === 'in' ? 2800 : 3200;
+        ringLoopTimer = setTimeout(function loop() {
+            if (ringKind !== kind) return;
+            withAudio(() => { if (ringKind === kind) ringCycle(kind); });
+            ringLoopTimer = setTimeout(loop, period);
+        }, 120);
+    }
+    function stopRing() {
+        clearTimeout(ringLoopTimer); ringLoopTimer = null; ringKind = null;
+        if (ringBus) { // уже запланированные ноты глушим быстрым спадом, а не даём доиграть
+            const b = ringBus; ringBus = null;
+            try { b.gain.setTargetAtTime(0, audioCtx.currentTime, 0.03); } catch(e) {}
+            setTimeout(() => { try { b.disconnect(); } catch(e) {} }, 400);
+        }
+    }
+
     let currentTheme = 'dark';
     function applyTheme(theme) {
         currentTheme = theme;
@@ -752,6 +902,7 @@
             case 'connected': dot.classList.add('active'); label.innerText = 'CONNECTED'; pingUi.classList.add('visible'); break;
         }
         if (connPopOpen) renderConnPop();
+        updateCallUI();
     }
 
     // --- WebRTC Logic ---
@@ -768,6 +919,7 @@
                 try {
                     if (data.type === 'offer') {
                         await pc.setRemoteDescription(new RTCSessionDescription(data));
+                        ensureAudioTransceiver();
                         const answer = await pc.createAnswer();
                         await pc.setLocalDescription(answer);
                         socket.emit('signal', { roomId: currentRoomId, data: answer });
@@ -827,11 +979,14 @@
 
     // Закрывает канал и соединение, сбрасывает буферы передачи файлов и данные плашки
     function closePeerConnection() {
+        resetCall(callState === 'active' ? 'end' : ''); // до закрытия pc: освобождаем микрофон и таймеры звонка
         if (dc) { dc.onopen = dc.onclose = dc.onmessage = null; try { dc.close(); } catch(e) {} dc = null; }
-        if (pc) { pc.oniceconnectionstatechange = null; pc.onicecandidate = null; pc.ondatachannel = null; try { pc.close(); } catch(e) {} pc = null; }
+        if (pc) { pc.oniceconnectionstatechange = null; pc.onicecandidate = null; pc.ondatachannel = null; pc.ontrack = null; try { pc.close(); } catch(e) {} pc = null; }
+        audioTransceiver = null; remoteCallStream = null;
         receiveBuffer = []; receiveMeta = null; receivedSize = 0; isSendingFile = false;
         document.getElementById('btn-attach').classList.remove('active', 'sending');
         sessionStartTs = null; connInfo = null; closeConnPop();
+        connUnstable = false; // иначе после обрыва и выхода в следующей сессии первое подключение написало бы «Связь восстановлена»
     }
 
     // Остатки в интерфейсе: черновик, цитата, "печатает", системное уведомление, код комнаты
@@ -856,13 +1011,20 @@
         activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = [];
         currentRoomId = null; isConnected = false; updateStatusUI('offline'); navTo('screen-home');
         document.getElementById('join-code-input').value = ''; document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
-        document.getElementById('messages').innerHTML = '<div class="msg system">Соединение установлено<br>E2EE канал активен</div>';
+        document.getElementById('messages').innerHTML = '<div class="msg system">Соединение установлено<br>P2P канал активен</div>';
         cancelReply(); cancelStagedFile();
         wipeSessionTraces();
     }
 
     // Закрытие/перезагрузка/уход вкладки в bfcache: рвём соединение сразу и чистим всё
-    window.addEventListener('pagehide', () => { try { cancelSession(); } catch(e) {} });
+    window.addEventListener('pagehide', () => {
+        // Сначала явно сообщаем собеседнику о конце звонка (иначе он увидит «соединение потеряно»), потом рвём всё
+        try {
+            if (callState === 'incoming') sendCallSignal('call-decline', callId, { reason: 'declined' });
+            else if (callState !== 'idle' && callState !== 'starting') sendCallSignal('call-end', callId);
+        } catch(e) {}
+        try { cancelSession(); } catch(e) {}
+    });
 
     function setupWebRTC(isInitiator) {
         pc = new RTCPeerConnection(rtcConfig);
@@ -871,6 +1033,14 @@
             if(pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') handleConnectionSuccess();
             else if (pc.iceConnectionState === 'disconnected') handleConnectionDrop(); // может быть временным
             else if (pc.iceConnectionState === 'failed') handleConnectionDrop(true);
+        };
+        // Аудио-трансивер создаётся заранее и согласуется вместе с первым offer/answer (sendrecv, без трека).
+        // Звонок = replaceTrack, поэтому ренеготиация SDP не нужна (сокет сигналинга после соединения закрыт).
+        audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv' });
+        pc.ontrack = (e) => {
+            if (e.track.kind !== 'audio') return;
+            remoteCallStream = new MediaStream([e.track]);
+            if (callState === 'active') attachRemoteAudio();
         };
         if (isInitiator) { dc = pc.createDataChannel("mlink_channel", { ordered: true }); setupDataChannel(); }
         else { pc.ondatachannel = (e) => { dc = e.channel; setupDataChannel(); }; }
@@ -938,6 +1108,8 @@
                     const url = URL.createObjectURL(blob);
                     markFileComplete(`msg-${receiveMeta.id}`, url, receiveMeta.mime);
                     receiveBuffer = []; receiveMeta = null; receivedSize = 0;
+                } else if (typeof payload.type === 'string' && payload.type.startsWith('call-')) {
+                    handleCallSignal(payload);
                 }
            } catch(err) {
     console.error('mProtocol: ошибка обработки входящих данных', err);
@@ -947,6 +1119,7 @@
 
     function handleConnectionSuccess() {
         if (isConnected) return;
+        if (connUnstable) { connUnstable = false; sysLog("Связь восстановлена."); }
         isConnected = true; if (!sessionStartTs) sessionStartTs = Date.now();
         updateStatusUI('connected'); navTo('screen-chat');
         showSoundHint();
@@ -964,11 +1137,14 @@
     function handleConnectionDrop(final = false) {
         const wasActive = isConnected;
         isConnected = false; stopSessionTimers(); updateStatusUI('offline');
-        if (wasActive) sysLog("Соединение разорвано.", true);
+        // Временный обрыв — «нестабильна», окончательный — «разорвано» (в том числе если до этого связь уже была нестабильна)
+        if (wasActive || (final && connUnstable)) sysLog(final ? "Соединение разорвано." : "Связь нестабильна…", true);
+        connUnstable = !final && (wasActive || connUnstable);
         if (isSendingFile || receiveMeta) {
             sysLog("Ошибка: Передача файла прервана.", true); isSendingFile = false; receiveBuffer = []; receiveMeta = null;
             document.getElementById('btn-attach').classList.remove('active', 'sending');
         }
+        if (final && callState !== 'idle') sysLog("Звонок прерван: соединение потеряно.", true);
         if (final) { abortRecording(); closePeerConnection(); }
     }
 
@@ -1248,10 +1424,12 @@
         const arrayBuffer = await file.arrayBuffer(); let offset = 0;
         const sendNextChunk = () => {
             if (!dc || dc.readyState !== 'open' || !isSendingFile) return;
-            if (dc.bufferedAmount > 8 * 1024 * 1024) { setTimeout(sendNextChunk, 100); return; }
+            // Во время звонка файл идёт медленнее и с малым буфером, чтобы не раздувать очередь и не ломать звук
+            const inCall = callState === 'active';
+            if (dc.bufferedAmount > (inCall ? 256 * 1024 : 8 * 1024 * 1024)) { setTimeout(sendNextChunk, 100); return; }
             const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE); dc.send(chunk); offset += chunk.byteLength;
             updateFileProgress(`msg-${fileId}`, Math.round((offset / file.size) * 100));
-            if (offset < file.size) setTimeout(sendNextChunk, 5);
+            if (offset < file.size) setTimeout(sendNextChunk, inCall ? 15 : 5);
             else { 
                 dc.send(JSON.stringify({ type: 'file-eof', id: fileId })); 
                 isSendingFile = false; 
@@ -1272,6 +1450,7 @@
         const btnVoice = document.getElementById('btn-voice');
         
         if (!isRecording) {
+            if (callState !== 'idle') { sysLog("Голосовые сообщения недоступны во время звонка.", true); return; }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
@@ -1307,6 +1486,384 @@
             btnVoice.classList.remove('recording');
         }
     }
+
+    // --- Voice Call Logic ---
+    // Сигналинг звонка идёт по DataChannel (сокет после соединения отключён).
+    // Аудио-трансивер согласован заранее (setupWebRTC), поэтому звонок = replaceTrack, без ренеготиации SDP.
+    // Звонящий:   idle → starting → outgoing → accepting → active → idle
+    // Принимающий: idle → incoming → accepting → active → idle
+    const CALL_RING_TIMEOUT_MS = 30000;
+    const CALL_ID_RE = /^[A-Za-z0-9-]{1,64}$/;
+    // Обработка звука браузером (эхо / шум / авто-громкость): по умолчанию всё включено, выбор хранится в localStorage
+    const CALL_AUDIO_KEY = 'mp_call_audio';
+    const callAudio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+    try {
+        const savedAudio = JSON.parse(localStorage.getItem(CALL_AUDIO_KEY) || 'null');
+        if (savedAudio && typeof savedAudio === 'object') Object.keys(callAudio).forEach(k => { if (typeof savedAudio[k] === 'boolean') callAudio[k] = savedAudio[k]; });
+    } catch(e) {}
+    function buildMicConstraints() { return { audio: { ...callAudio }, video: false }; }
+
+    let callState = 'idle';
+    let callId = null;
+    let callStartTs = null;     // для таймера звонка (UI)
+    let callMuted = false;
+    let peerMuted = false;
+    let localCallStream = null;
+    let remoteCallStream = null;
+    let audioTransceiver = null;
+    let ringTimer = null;
+
+    const remoteAudioEl = document.createElement('audio');
+    remoteAudioEl.autoplay = true; remoteAudioEl.setAttribute('playsinline', ''); remoteAudioEl.style.display = 'none';
+    document.body.appendChild(remoteAudioEl);
+
+    function stopStream(s) { try { s.getTracks().forEach(t => t.stop()); } catch(e) {} }
+    function getCallDuration() { return callStartTs ? Date.now() - callStartTs : 0; }
+    function clearRing() { clearTimeout(ringTimer); ringTimer = null; }
+
+    // Гарантирует двусторонний аудио-трансивер на стороне answer (иначе звонок будет односторонним)
+    function ensureAudioTransceiver() {
+        if (!pc) return;
+        const t = pc.getTransceivers().find(t => t.mid !== null && t.receiver.track && t.receiver.track.kind === 'audio');
+        if (t) { audioTransceiver = t; if (t.direction !== 'sendrecv') t.direction = 'sendrecv'; }
+    }
+
+    function sendCallSignal(type, id, extra = {}) {
+        if (!dc || dc.readyState !== 'open') return false;
+        try { dc.send(JSON.stringify({ type, callId: id, ...extra })); return true; } catch(e) { return false; }
+    }
+
+    function acquireMic() { return navigator.mediaDevices.getUserMedia(buildMicConstraints()); }
+
+    function attachRemoteAudio() {
+        if (!remoteCallStream) return;
+        remoteAudioEl.srcObject = remoteCallStream;
+        remoteAudioEl.play().then(() => { remoteAudioBlocked = false; updateCallUI(); }).catch(() => { remoteAudioBlocked = true; updateCallUI(); });
+    }
+
+    async function attachLocalAudio() {
+        const track = localCallStream && localCallStream.getAudioTracks()[0];
+        if (!track || !audioTransceiver) throw new Error('no-audio');
+        const cd = audioTransceiver.currentDirection;
+        if (cd && cd !== 'sendrecv' && cd !== 'sendonly') throw new Error('audio-not-negotiated');
+        track.enabled = !callMuted;
+        await audioTransceiver.sender.replaceTrack(track);
+    }
+
+    // Экран не гаснет во время звонка (на телефоне погасший экран часто усыпляет вкладку). Wake Lock снимается системой при
+    // сворачивании вкладки — возвращаем при возврате (visibilitychange). Не поддерживается — просто ничего не делаем.
+    let callWakeLock = null, wakeLockPending = false;
+    async function acquireWakeLock() {
+        if (callWakeLock || wakeLockPending || !('wakeLock' in navigator)) return;
+        wakeLockPending = true;
+        try {
+            const l = await navigator.wakeLock.request('screen');
+            if (callState !== 'active') { l.release().catch(() => {}); return; }
+            callWakeLock = l;
+            l.addEventListener('release', () => { if (callWakeLock === l) callWakeLock = null; });
+        } catch(e) {} finally { wakeLockPending = false; }
+    }
+    function releaseWakeLock() { const l = callWakeLock; callWakeLock = null; if (l) l.release().catch(() => {}); }
+
+    // Полная очистка: микрофон, таймеры, удалённый звук, состояние. Безопасно вызывать в любой момент.
+    // snd — необязательный звук окончания ('end' / 'fail'); ринг гаснет в updateCallUI при любом выходе из incoming/outgoing
+    function resetCall(snd) {
+        clearRing(); releaseWakeLock();
+        clearTimeout(callAudioTimer); callAudioTimer = null; // отложенное применение настроек звука не должно пережить звонок
+        if (audioTransceiver) { try { audioTransceiver.sender.replaceTrack(null).catch(() => {}); } catch(e) {} }
+        if (localCallStream) { stopStream(localCallStream); localCallStream = null; }
+        try { remoteAudioEl.pause(); remoteAudioEl.srcObject = null; remoteAudioEl.volume = 1; } catch(e) {} // громкость следующего звонка — снова 100%
+        callState = 'idle'; callId = null; callStartTs = null; callMuted = false; peerMuted = false; remoteAudioBlocked = false;
+        updateCallUI();
+        if (snd) playCallSound(snd);
+    }
+
+    // Оба участника попали в 'accepting' → поднимаем аудио
+    async function activateCall(id) {
+        try { await attachLocalAudio(); }
+        catch(e) {
+            if (callId === id) { sysLog("Ошибка: не удалось запустить аудио.", true); sendCallSignal('call-end', id); resetCall('fail'); }
+            return;
+        }
+        if (callId !== id || callState !== 'accepting') return; // звонок завершили, пока шёл replaceTrack
+        callState = 'active'; updateCallUI(); callStartTs = Date.now();
+        attachRemoteAudio();
+        sysLog("Звонок начался."); playCallSound('connect');
+        acquireWakeLock();
+        const t0 = localCallStream && localCallStream.getAudioTracks()[0];
+        if (t0 && t0.readyState === 'ended') onMicEnded(localCallStream); // микрофон пропал ещё до начала разговора
+    }
+
+    async function startCall() {
+        if (callState !== 'idle') return;
+        if (!isConnected || !dc || dc.readyState !== 'open' || !pc || !audioTransceiver) { sysLog("Звонок недоступен: нет соединения.", true); return; }
+        if (isRecording) { sysLog("Сначала завершите запись голосового сообщения.", true); return; }
+        const id = crypto.randomUUID();
+        callId = id; callState = 'starting'; updateCallUI();
+        let stream;
+        try { stream = await acquireMic(); }
+        catch(e) { if (callId === id) { sysLog("Ошибка: Нет доступа к микрофону.", true); resetCall('fail'); } return; }
+        if (callId !== id || callState !== 'starting') { stopStream(stream); return; }
+        localCallStream = stream; watchMic(stream); // в канал не уходит, пока собеседник не принял
+        if (!sendCallSignal('call-invite', id)) { sysLog("Не удалось отправить вызов.", true); resetCall('fail'); return; }
+        callState = 'outgoing'; updateCallUI();
+        ringTimer = setTimeout(() => {
+            if (callId === id && callState === 'outgoing') { sendCallSignal('call-end', id); sysLog("Нет ответа."); resetCall('fail'); }
+        }, CALL_RING_TIMEOUT_MS);
+        sysLog("Вызов…");
+    }
+
+    async function acceptCall() {
+        if (callState !== 'incoming') return;
+        const id = callId;
+        clearRing(); callState = 'accepting'; updateCallUI();
+        // Шла запись голосового сообщения: микрофон нужен звонку — завершаем запись (сообщение отправится как обычно), а не держим два захвата
+        if (isRecording) { sysLog("Запись голосового сообщения завершена: принят звонок."); toggleVoiceRecord(); }
+        let stream;
+        try { stream = await acquireMic(); }
+        catch(e) {
+            if (callId === id) { sysLog("Ошибка: Нет доступа к микрофону.", true); sendCallSignal('call-decline', id, { reason: 'mic' }); resetCall('fail'); }
+            return;
+        }
+        if (callId !== id || callState !== 'accepting') { stopStream(stream); return; }
+        localCallStream = stream; watchMic(stream);
+        if (!sendCallSignal('call-accept', id)) { sysLog("Не удалось ответить на звонок.", true); resetCall('fail'); return; }
+        await activateCall(id);
+    }
+
+    function declineCall() {
+        if (callState !== 'incoming') return;
+        sendCallSignal('call-decline', callId, { reason: 'declined' });
+        sysLog("Звонок отклонён.");
+        resetCall();
+    }
+
+    // Универсальное «положить трубку»: отменяет вызов, отклоняет входящий или завершает активный
+    function endCall() {
+        if (callState === 'idle') return;
+        if (callState === 'incoming') { declineCall(); return; }
+        if (callState !== 'starting') sendCallSignal('call-end', callId);
+        const wasActive = callState === 'active';
+        sysLog(wasActive ? `Звонок завершён · ${formatSessionTime(getCallDuration())}` : "Вызов отменён.");
+        resetCall(wasActive ? 'end' : '');
+    }
+
+    function toggleCallMute() {
+        if (callState !== 'active' || !localCallStream) return;
+        callMuted = !callMuted;
+        localCallStream.getAudioTracks().forEach(t => { t.enabled = !callMuted; });
+        sendCallSignal('call-mute', callId, { muted: callMuted });
+        updateCallUI(); playCallSound(callMuted ? 'mute' : 'unmute');
+    }
+
+    // Всё, что пришло от собеседника — недоверенное: проверяем id и состояние
+    function handleCallSignal(p) {
+        if (typeof p.callId !== 'string' || !CALL_ID_RE.test(p.callId)) return;
+        const id = p.callId;
+        switch (p.type) {
+            case 'call-invite': {
+                if (id === callId) return;
+                if (callState === 'outgoing' || callState === 'starting') {
+                    // Одновременный вызов: побеждает хост (его invite дойдёт/уже дошёл), гость уступает и сразу принимает.
+                    // Хост свой 'starting'/'outgoing' не трогает и не отвечает «занят» — иначе оба вызова отменят друг друга.
+                    if (isHost) return;
+                    const wasStarting = callState === 'starting';
+                    clearRing(); callId = id;
+                    if (wasStarting) { callState = 'incoming'; updateCallUI(); acceptCall(); return; } // свой getUserMedia дозакроется по callId
+                    callState = 'accepting'; updateCallUI();
+                    sendCallSignal('call-accept', id); activateCall(id); return;
+                }
+                if (callState !== 'idle') { sendCallSignal('call-decline', id, { reason: 'busy' }); return; }
+                callId = id; callState = 'incoming'; updateCallUI();
+                ringTimer = setTimeout(() => {
+                    if (callId === id && callState === 'incoming') { sysLog("Пропущенный звонок."); resetCall(); }
+                }, CALL_RING_TIMEOUT_MS + 5000);
+                sysLog("Входящий звонок…");
+                triggerNativeAlert("Входящий звонок", "mProtocol"); // звук — рингтон из updateCallUI
+                break;
+            }
+            case 'call-accept':
+                if (callState === 'outgoing' && id === callId) { clearRing(); callState = 'accepting'; updateCallUI(); activateCall(id); }
+                break;
+            case 'call-decline':
+                if (callState === 'outgoing' && id === callId) {
+                    sysLog(p.reason === 'busy' ? "Собеседник занят." : p.reason === 'mic' ? "У собеседника нет доступа к микрофону." : "Звонок отклонён.");
+                    resetCall('fail');
+                }
+                break;
+            case 'call-end':
+                if (callState !== 'idle' && id === callId) {
+                    const wasActive = callState === 'active';
+                    sysLog(wasActive ? `Звонок завершён · ${formatSessionTime(getCallDuration())}` : callState === 'incoming' ? "Пропущенный звонок." : "Звонок завершён.");
+                    resetCall(wasActive ? 'end' : '');
+                }
+                break;
+            case 'call-mute':
+                if (callState === 'active' && id === callId && typeof p.muted === 'boolean') { peerMuted = p.muted; updateCallUI(); }
+                break;
+        }
+    }
+
+    // --- Call UI ---
+    let callUiTimer = null, remoteAudioBlocked = false, titleBlinkTimer = null;
+
+    function onCallBtn() { if (callState === 'idle') startCall(); else endCall(); }
+
+    // Браузер может запретить автовоспроизведение (iOS Safari) — даём кнопку ручного запуска
+    function resumeRemoteAudio() {
+        remoteAudioEl.play().then(() => { remoteAudioBlocked = false; updateCallUI(); }).catch(() => {});
+    }
+
+    function updateCallUI() {
+        const $ = id => document.getElementById(id);
+        const idle = callState === 'idle', st = callState;
+        const btn = $('call-btn'), bar = $('call-bar');
+        if (!btn || !bar) return;
+
+        // Кнопка в шапке — только «Позвонить»: во время звонка (в т.ч. входящего) управление только в панели звонка
+        btn.hidden = !(idle && isConnected);
+        btn.classList.toggle('in-call', !idle);
+        const t = idle ? 'Позвонить' : (st === 'incoming' ? 'Отклонить' : 'Завершить звонок');
+        btn.title = t; btn.setAttribute('aria-label', t);
+
+        // Рингтон по состоянию + мигание заголовка вкладки при входящем + индикатор звонка в заголовке
+        if (st === 'incoming') startRing('in'); else if (st === 'outgoing') startRing('out'); else stopRing();
+        if (st === 'incoming' && !titleBlinkTimer) titleBlinkTimer = setInterval(() => { titleBlink = !titleBlink; updateTitleBadge(); }, 1000);
+        else if (st !== 'incoming' && titleBlinkTimer) { clearInterval(titleBlinkTimer); titleBlinkTimer = null; titleBlink = false; }
+        updateTitleBadge();
+
+        bar.classList.toggle('visible', !idle);
+        bar.dataset.state = st;
+        $('btn-voice').classList.toggle('call-locked', !idle);
+
+        const STATUS = { starting: 'Подготовка…', outgoing: 'Вызов…', incoming: 'Входящий звонок', accepting: 'Соединение…', active: 'Звонок' };
+        let sub = '';
+        if (st === 'starting') sub = 'Разрешите доступ к микрофону';
+        else if (st === 'outgoing') sub = 'Ожидание ответа';
+        else if (st === 'incoming') sub = 'Голосовой, без видео';
+        else if (st === 'active') sub = formatSessionTime(getCallDuration()) + (peerMuted ? ' · собеседник выключил микрофон' : '');
+        $('call-status').innerText = STATUS[st] || '';
+        $('call-sub').innerText = sub;
+
+        $('call-accept').hidden = st !== 'incoming';
+        $('call-end').hidden = idle;
+        $('call-end').title = st === 'incoming' ? 'Отклонить' : (st === 'active' ? 'Завершить' : 'Отменить');
+        $('call-end').setAttribute('aria-label', $('call-end').title);
+        $('call-mute').hidden = st !== 'active';
+        $('call-settings').hidden = st !== 'active';
+        if (st !== 'active') closeCallPop();
+        $('call-sound').hidden = !(st === 'active' && remoteAudioBlocked);
+        $('icon-call-mic').style.display = callMuted ? 'none' : '';
+        $('icon-call-mic-off').style.display = callMuted ? '' : 'none';
+        $('call-mute').classList.toggle('muted', callMuted);
+        $('call-mute').setAttribute('aria-pressed', String(callMuted));
+        $('call-mute').title = callMuted ? 'Включить микрофон' : 'Выключить микрофон';
+        $('call-mute').setAttribute('aria-label', $('call-mute').title);
+
+        // Секундомер звонка тикает только пока звонок активен
+        if (st === 'active' && !callUiTimer) callUiTimer = setInterval(updateCallUI, 1000);
+        else if (st !== 'active' && callUiTimer) { clearInterval(callUiTimer); callUiTimer = null; }
+    }
+
+    // --- Настройки звука звонка (шестерёнка в панели звонка) ---
+    const callPop = document.getElementById('call-pop');
+    const callPopNote = document.getElementById('call-pop-note');
+    const CALL_OPTS = [['opt-aec', 'echoCancellation'], ['opt-ns', 'noiseSuppression'], ['opt-agc', 'autoGainControl']];
+    let callPopOpen = false;
+    let callAudioSeq = 0; // номер последнего запроса на смену настроек: устаревшие ответы отбрасываем
+    let callAudioTimer = null; // отложенное применение: серия переключений = один запрос, а не по запросу на каждый
+
+    // Строка под переключателями скрыта, пока нечего сказать (сейчас — только если браузер игнорирует настройку)
+    function setCallPopNote(text) { callPopNote.textContent = text || ''; callPopNote.toggleAttribute('hidden', !text); }
+
+    function openCallPop() {
+        if (callPopOpen) return;
+        callPopOpen = true;
+        CALL_OPTS.forEach(([id, key]) => { document.getElementById(id).checked = callAudio[key]; });
+        const vp = Math.round(remoteAudioEl.volume * 100);
+        document.getElementById('opt-vol').value = vp; document.getElementById('call-vol-val').textContent = vp + '%';
+        setCallPopNote('');
+        callPop.classList.add('open'); document.getElementById('call-settings').setAttribute('aria-expanded', 'true');
+    }
+    function closeCallPop() {
+        if (!callPopOpen) return;
+        callPopOpen = false;
+        callPop.classList.remove('open'); document.getElementById('call-settings').setAttribute('aria-expanded', 'false');
+        if (callAudioTimer) { clearTimeout(callAudioTimer); callAudioTimer = null; applyCallAudio(); } // закрыли панель — применяем сразу
+    }
+    function toggleCallPop() { callPopOpen ? closeCallPop() : openCallPop(); }
+
+    // Смена настроек во время звонка. Сначала пробуем applyConstraints на живом треке (без запроса микрофона) и проверяем
+    // результат через getSettings. Если браузер не применил (многие фиксируют эти параметры при захвате) — захватываем
+    // микрофон заново и подменяем трек через replaceTrack (без ренеготиации SDP). Новый захват может вызвать запрос доступа.
+    // force=true — микрофон пропал (трек завершился): сразу пере-захватываем, без попытки applyConstraints.
+    // Результат: true — применено, false — не удалось, null — запрос устарел или звонок не активен (ничего не делали).
+    async function applyCallAudio(force) {
+        if (callState !== 'active' || !localCallStream || !audioTransceiver) return null; // вне звонка — настройки подхватит acquireMic
+        const seq = ++callAudioSeq, id = callId;
+        const stillActive = () => callState === 'active' && callId === id;
+        const cur = localCallStream.getAudioTracks()[0];
+        if (cur && !force) {
+            try { await cur.applyConstraints({ ...callAudio }); } catch(e) {}
+            if (seq !== callAudioSeq || !stillActive()) return null;
+            const cs = cur.getSettings ? cur.getSettings() : {};
+            if (CALL_OPTS.every(([, key]) => cs[key] === callAudio[key])) { setCallPopNote(''); return true; } // применилось, микрофон не трогали
+        }
+        let stream;
+        try { stream = await acquireMic(); }
+        catch(e) { setCallPopNote('Не удалось применить: нет доступа к микрофону.'); return false; }
+        if (seq !== callAudioSeq || !stillActive()) { stopStream(stream); return null; } // звонок кончился или пришёл более свежий запрос
+        const track = stream.getAudioTracks()[0];
+        try { track.enabled = !callMuted; await audioTransceiver.sender.replaceTrack(track); }
+        catch(e) { stopStream(stream); setCallPopNote('Не удалось применить настройки.'); return false; }
+        if (!stillActive()) { // звонок завершили, пока шёл replaceTrack: не оставляем микрофон включённым
+            stopStream(stream);
+            if (audioTransceiver) { try { audioTransceiver.sender.replaceTrack(null).catch(() => {}); } catch(e) {} }
+            return null;
+        }
+        track.enabled = !callMuted; // mute могли переключить во время захвата
+        const old = localCallStream; localCallStream = stream; if (old) stopStream(old);
+        watchMic(stream);
+        const s = track.getSettings ? track.getSettings() : {};
+        const ignored = CALL_OPTS.some(([, key]) => typeof s[key] === 'boolean' && s[key] !== callAudio[key]);
+        setCallPopNote(ignored ? 'Этот браузер игнорирует часть настроек обработки звука.' : '');
+        return true;
+    }
+
+    // Микрофон пропал посреди звонка (отключили гарнитуру, система забрала устройство): трек молча завершается и собеседник
+    // перестаёт нас слышать. Ловим 'ended' (при нашем собственном stop() оно не срабатывает) и пробуем взять микрофон заново.
+    async function onMicEnded(stream) {
+        if (localCallStream !== stream || callState !== 'active') return;
+        const id = callId;
+        sysLog("Ваш микрофон отключился. Подключаю заново…", true);
+        const ok = await applyCallAudio(true);
+        if (callId !== id || callState !== 'active') return;
+        if (ok === true) sysLog("Микрофон снова подключён.");
+        else if (ok === false) sysLog("Не удалось подключить микрофон. Собеседник вас не слышит.", true);
+    }
+    function watchMic(stream) {
+        const track = stream && stream.getAudioTracks()[0];
+        if (track) track.addEventListener('ended', () => onMicEnded(stream));
+    }
+
+    // Громкость собеседника. Браузеры без поддержки (iOS Safari) не дают менять volume у audio-элемента — тогда ползунок скрыт.
+    const callVolRow = document.getElementById('call-vol-row');
+    try { remoteAudioEl.volume = 0.5; if (Math.abs(remoteAudioEl.volume - 0.5) > 0.01) callVolRow.hidden = true; remoteAudioEl.volume = 1; } catch(e) { callVolRow.hidden = true; }
+    function onCallVol() {
+        const v = parseInt(document.getElementById('opt-vol').value, 10);
+        remoteAudioEl.volume = Math.max(0, Math.min(1, v / 100));
+        document.getElementById('call-vol-val').textContent = v + '%';
+    }
+
+    function onCallOptChange() {
+        CALL_OPTS.forEach(([id, key]) => { callAudio[key] = document.getElementById(id).checked; });
+        try { localStorage.setItem(CALL_AUDIO_KEY, JSON.stringify(callAudio)); } catch(e) {}
+        clearTimeout(callAudioTimer);
+        callAudioTimer = setTimeout(() => { callAudioTimer = null; applyCallAudio(); }, 700);
+    }
+
+    document.addEventListener('pointerdown', e => { if (callPopOpen && !callPop.contains(e.target) && !document.getElementById('call-settings').contains(e.target)) closeCallPop(); }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCallPop(); });
 
     // --- Drag & Drop / Staging UI ---
     function updateStagedUI() {
