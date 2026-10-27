@@ -156,11 +156,29 @@
         .sound-pulse { animation: soundPulse 1s ease-out 2; }
         @keyframes soundPulse { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 100% { box-shadow: 0 0 0 10px transparent; } }
         @media (prefers-reduced-motion: reduce) { .sound-hint, .sound-pulse { animation: none; } }
+        /* Всплывающее уведомление: ошибки до установки соединения (чат ещё скрыт) */
+        .toast { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -12px); max-width: min(420px, calc(100vw - 24px)); padding: 10px 16px; border-radius: 14px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--glass-border); box-shadow: 0 8px 24px rgba(0,0,0,0.25); font-size: 0.85rem; line-height: 1.4; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); z-index: 3000; }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.error { border-color: rgba(255, 69, 58, 0.4); color: var(--danger); }
+        @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
         .input-text, .input-code { background: rgba(127, 127, 127, 0.05); border: 1px solid var(--glass-border); color: var(--text-main); border-radius: 14px; display: block; margin: 0 auto 24px auto; width: 100%; max-width: 400px; transition: all 0.3s; text-align: center; outline: none; }
         .input-text { padding: 16px; font-family: var(--font-sans); font-size: 1rem; }
         .input-code { padding: 20px; font-family: var(--font-mono); font-size: 2rem; letter-spacing: 8px; }
         .input-text:focus, .input-code:focus { border-color: var(--glass-highlight); background: rgba(127, 127, 127, 0.1); }
         .input-text::placeholder, .input-code::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+        /* Ошибка ввода кода: красная рамка + лёгкая тряска + строка с пояснением под полем */
+        .input-code.has-error { border-color: var(--danger); background: rgba(255, 69, 58, 0.08); color: var(--danger); box-shadow: 0 0 0 4px rgba(255, 69, 58, 0.15); animation: codeShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+        .input-code.has-error:focus { border-color: var(--danger); background: rgba(255, 69, 58, 0.08); }
+        @keyframes codeShake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-7px); } 40%, 60% { transform: translateX(7px); } }
+        .code-error { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 400px; margin: 0 auto; max-height: 0; overflow: hidden; opacity: 0; transform: translateY(-6px); color: var(--danger); font-size: 0.9rem; font-weight: 600; text-align: center; pointer-events: none; transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .code-error.show { max-height: 48px; margin: -10px auto 18px; opacity: 1; transform: none; }
+        .code-error svg { flex-shrink: 0; }
+
+        /* Подсказка под коротким системным сообщением (например, «Нажмите F5») */
+        .msg.system .sys-hint { display: block; margin-top: 3px; font-family: var(--font-sans); font-size: 0.65rem; color: var(--text-muted); opacity: 0.85; animation: hintIn 0.5s ease 0.25s backwards; }
+        @keyframes hintIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 0.85; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .input-code.has-error, .msg.system .sys-hint { animation: none; } .code-error { transition: none; } }
 
         .btn { background: rgba(127, 127, 127, 0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 16px; border-radius: 14px; font-size: 1rem; font-weight: 500; cursor: pointer; width: 100%; max-width: 400px; margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); backdrop-filter: blur(10px); }
         .btn:hover { background: rgba(127, 127, 127, 0.1); border-color: var(--glass-highlight); transform: translateY(-1px); }
@@ -262,6 +280,76 @@
         .image-preview { max-width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid var(--glass-border); display: block; object-fit: contain; max-height: 250px; background: rgba(0,0,0,0.2); transition: transform 0.2s; }
         .image-preview-link { display: inline-block; cursor: pointer; }
         .image-preview-link:hover .image-preview { transform: scale(1.02); }
+
+        /* Фото-сообщения: фото — главный элемент, имя и размер — мелкая подпись, скачивание — иконка в углу */
+        .file-transfer-box.is-image { position: relative; min-width: 140px; gap: 6px; }
+        .is-image > .preview-container { order: 0; width: var(--pw, 220px); max-width: 100%; aspect-ratio: var(--ar, 4 / 3); border-radius: 12px; overflow: hidden; background: rgba(127,127,127,0.14); }
+        .is-image > .preview-container.natural { width: auto; aspect-ratio: auto; }
+        .is-image > .preview-container.failed { display: none; }
+        .is-image .image-preview-link { display: block; width: 100%; height: 100%; }
+        .is-image .image-preview { width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; max-height: none; object-fit: cover; background: none; transition: transform 0.12s ease-out; }
+        .is-image > .preview-container.natural .image-preview { width: auto; height: auto; max-width: 100%; max-height: 340px; object-fit: contain; }
+        .is-image .image-preview-link:hover .image-preview { transform: none; }
+        .is-image > .file-progress-container { order: 1; margin-top: 0; }
+        .is-image > .file-info { order: 2; width: 0; min-width: 100%; gap: 0; }
+        .is-image .file-icon { display: none; }
+        .is-image .file-details { display: flex; align-items: baseline; gap: 8px; }
+        .is-image .file-name { flex: 1; min-width: 0; font-size: 0.72rem; font-weight: 400; opacity: 0.6; }
+        .is-image .file-size { flex-shrink: 0; opacity: 0.6; color: inherit; }
+        .msg-wrapper .file-transfer-box.is-image > .btn-download { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; margin: 0; padding: 0; align-items: center; justify-content: center; border: none; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+        .msg-wrapper .file-transfer-box.is-image > .btn-download:hover { background: rgba(0,0,0,0.75); }
+
+        /* Бейдж типа файла вместо общей иконки */
+        .file-icon.ext-badge { font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700; color: #fff; background: #6b7280; }
+        .file-icon[data-t="pdf"] { background: #e5484d; }
+        .file-icon[data-t="arc"] { background: #d98e04; }
+        .file-icon[data-t="doc"] { background: #2f6fed; }
+        .file-icon[data-t="xls"] { background: #1f9d55; }
+        .file-icon[data-t="ppt"] { background: #e5702a; }
+        .file-icon[data-t="audio"] { background: #8e4ec6; }
+        .file-icon[data-t="code"] { background: #4b5563; }
+        /* Видео и текст */
+        .is-video > .preview-container { background: #000; }
+        .video-preview { display: block; width: auto; height: auto; max-width: 300px; max-height: 340px; min-width: 140px; background: #000; }
+        /* Кнопка «Открыть» (текст, HTML, PDF) и окно просмотра */
+        .btn-open { display: none; margin-top: 8px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main); text-align: center; padding: 6px; border-radius: 8px; font-size: 0.8rem; text-decoration: none; font-weight: 500; transition: all 0.2s; cursor: pointer; }
+        .btn-open:hover { background: rgba(127,127,127,0.2); }
+        .msg-wrapper.mine .btn-open { background: var(--bg-dark); color: var(--text-main); border-color: transparent; }
+        .viewer-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.62); display: flex; align-items: center; justify-content: center; padding: 12px; }
+        .viewer-box { background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 16px; width: min(900px, 100%); height: min(85vh, 100%); height: min(85dvh, 100%); display: flex; flex-direction: column; overflow: hidden; }
+        .viewer-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--glass-border); }
+        .viewer-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; font-weight: 500; }
+        .viewer-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main); border-radius: 8px; padding: 5px 10px; font-size: 0.75rem; cursor: pointer; }
+        .viewer-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+        a.viewer-btn { text-decoration: none; }
+        /* Лёгкие анимации (только opacity/transform), стиль появления сообщений */
+        @keyframes viewerFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes viewerFadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes viewerPop { from { opacity: 0; transform: translateY(28px) scale(0.96); } to { opacity: 1; transform: none; } }
+        @keyframes viewerPopOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(16px) scale(0.97); } }
+        @keyframes mediaIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+        /* Без backdrop-filter и без «пружины» на окне: размытие и перерасчёт слоя на каждом кадре давали подёргивание. Плавное замедление без перелёта. */
+        .viewer-overlay { animation: viewerFade 0.2s ease-out backwards; }
+        .viewer-box { will-change: transform, opacity; animation: viewerPop 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+        .viewer-overlay.closing { animation: viewerFadeOut 0.16s ease-in forwards; pointer-events: none; }
+        .viewer-overlay.closing .viewer-box { animation: viewerPopOut 0.16s ease-in forwards; }
+        /* Содержимое окна появляется уже после окончания анимации (см. JS), чтобы разбор HTML не мешал плавности */
+        .viewer-body > * { animation: contentIn 0.2s ease-out backwards; }
+        @keyframes contentIn { from { opacity: 0; } to { opacity: 1; } }
+        /* backwards, а не both: после анимации не фиксируем transform, иначе :active-эффект не сработает */
+        .image-preview, .video-preview, .audio-player { animation: mediaIn 0.28s ease-out backwards; }
+        .btn-open, .btn-download { animation: mediaIn 0.25s ease-out backwards; transition: all 0.2s, transform 0.1s; }
+        .btn-open:active, .btn-download:active, .viewer-btn:active { transform: scale(0.97); }
+        .is-image .image-preview-link:active .image-preview { transform: scale(0.985); }
+        .transfer-failed .file-size { color: var(--danger); }
+        .transfer-failed > .preview-container:empty { display: none; }
+        /* Скелетон: пока фото/видео не пришло, пустая рамка мягко «дышит» */
+        @keyframes skeletonPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+        .is-image > .preview-container:empty:not(.natural) { animation: skeletonPulse 1.4s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .viewer-overlay, .viewer-box, .viewer-overlay.closing, .viewer-overlay.closing .viewer-box, .viewer-body > *, .image-preview, .video-preview, .audio-player, .btn-open, .btn-download, .is-image > .preview-container:empty:not(.natural) { animation: none; } }
+        .viewer-body pre { margin: 0; padding: 14px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .viewer-body iframe { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+        .viewer-note { padding: 6px 14px; border-top: 1px solid var(--glass-border); font-size: 0.7rem; color: var(--text-muted); }
 
         .audio-player { 
     width: 100%; 
@@ -395,6 +483,8 @@
 <body data-theme="dark">
 <script>try{if(localStorage.getItem('mp_theme')==='light')document.body.setAttribute('data-theme','light');}catch(e){}</script>
 
+<div id="toast" class="toast" role="alert" aria-live="assertive"></div>
+
 <div class="ambient-bg">
     <div class="ambient-blob blob-1"></div>
     <div class="ambient-blob blob-2"></div>
@@ -488,6 +578,10 @@
             <p>Введите 6-значный код сессии.</p>
         </div>
         <input type="tel" id="join-code-input" class="input-code" placeholder="000000" maxlength="6" autocomplete="off">
+        <div id="code-error" class="code-error" role="alert" aria-live="assertive">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span id="code-error-text"></span>
+        </div>
         <button id="btn-join" class="btn btn-primary" onclick="joinSession()">Установить связь</button>
         <button class="btn" onclick="cancelSession()">Назад</button>
     </div>
@@ -573,17 +667,62 @@
         ] 
     };
 
+    // Токен поколения сессии: растёт при любом сбросе. Каждый await в запуске сессии сверяет его,
+    // чтобы отменённая сессия («Прервать», неверный код, сбой) не оживала после завершения запроса.
+    let sessionGen = 0;
+    let sessionActive = false;      // идёт запуск/жизнь сессии: защита от двойного нажатия «Создать»/«Подключиться»
+    let iceFetchCtl = null;         // AbortController запроса /ice-config
+    let iceTimer = null;            // таймаут установки соединения
+    let offerBusy = false;          // идёт createOffer у хоста
+    const ICE_FETCH_TIMEOUT_MS = 60000; // холодный старт сервера на Render — до минуты (как в подсказке на главном экране)
+    const ICE_SETUP_TIMEOUT_MS = 45000; // от появления второго участника до рабочего канала
+
     async function fetchIceConfig() {
+        const ctl = new AbortController();
+        iceFetchCtl = ctl;
+        const timer = setTimeout(() => ctl.abort(), ICE_FETCH_TIMEOUT_MS);
         try {
-            const response = await fetch(`${SIGNALING_SERVER}/ice-config`);
+            const response = await fetch(`${SIGNALING_SERVER}/ice-config`, { signal: ctl.signal });
             if (response.ok) {
                 const data = await response.json();
                 // Защита: перезаписываем rtcConfig только если пришел реальный массив
                 if (data && data.iceServers && Array.isArray(data.iceServers) && data.iceServers.length > 0) {
                     rtcConfig = data;
+                    return;
                 }
-            } 
-        } catch (err) { console.error("mProtocol ICE Fetch Error", err); }
+            }
+            if (iceFetchCtl === ctl) showToast("Не получены настройки relay-серверов: за строгим NAT соединение может не установиться.", true);
+        } catch (err) {
+            console.error("mProtocol ICE Fetch Error", err);
+            // Отмена пользователем (iceFetchCtl сброшен) молчит; таймаут/сеть — предупреждаем
+            if (iceFetchCtl === ctl) showToast("Не получены настройки relay-серверов: за строгим NAT соединение может не установиться.", true);
+        } finally {
+            clearTimeout(timer);
+            if (iceFetchCtl === ctl) iceFetchCtl = null;
+        }
+    }
+
+    function clearIceTimer() { clearTimeout(iceTimer); iceTimer = null; }
+    function startIceTimer() {
+        clearIceTimer();
+        const gen = sessionGen;
+        iceTimer = setTimeout(() => {
+            iceTimer = null;
+            if (gen !== sessionGen || isConnected) return;
+            failSession("Не удалось установить соединение. Проверьте сеть и попробуйте снова.");
+        }, ICE_SETUP_TIMEOUT_MS);
+    }
+
+    // Всплывающая ошибка/подсказка: работает на любом экране (sysLog пишет в чат, который до соединения скрыт)
+    let toastTimer = null;
+    function showToast(text, isError = false) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.textContent = String(text);
+        t.classList.toggle('error', !!isError);
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
     }
 
     let socket = null;
@@ -909,58 +1048,174 @@
     function connectSocket() {
         if (!socket) {
             updateStatusUI('waiting');
-            socket = io(SIGNALING_SERVER, { path: "/socket.io/", transports: ["websocket"] });
+            const gen = sessionGen;
+            // Ограниченные повторы: иначе при недоступном сервере соединение пытается восстановиться бесконечно
+            socket = io(SIGNALING_SERVER, { path: "/socket.io/", transports: ["websocket"], reconnectionAttempts: 6, reconnectionDelay: 1000, reconnectionDelayMax: 5000, timeout: 20000 });
+            const sock = socket;
             let iceCandidateQueue = [];
+            let sigWarned = false;
 
-            socket.on('connect_error', () => { sysLog("Ошибка сервера сигналинга.", true); updateStatusUI('offline'); });
-            
-            socket.on('signal', async (data) => {
-                if (!pc) return;
+            sock.on('connect', () => { if (gen === sessionGen && !isConnected) updateStatusUI('waiting'); });
+            sock.on('connect_error', () => {
+                if (gen !== sessionGen || isConnected) return;
+                // Первая ошибка — предупреждение, дальше сокет сам повторяет; итог подводит reconnect_failed
+                if (!sigWarned) { sigWarned = true; showToast("Сервер сигналинга не отвечает, повторяю…", true); }
+                updateStatusUI('offline');
+            });
+            sock.io.on('reconnect_failed', () => {
+                if (gen !== sessionGen || isConnected) return;
+                failSession("Сервер сигналинга недоступен. Попробуйте позже.");
+            });
+            // Сервер разорвал соединение, пока мы ещё не соединились с собеседником: комната потеряна
+            sock.on('disconnect', (reason) => {
+                if (gen !== sessionGen || isConnected || reason === 'io client disconnect') return;
+                failSession("Потеряна связь с сервером сигналинга.");
+            });
+
+            sock.on('signal', async (data) => {
+                const p = pc;
+                if (!p || gen !== sessionGen || !data || typeof data !== 'object') return;
+                const stale = () => p !== pc || gen !== sessionGen;
                 try {
                     if (data.type === 'offer') {
-                        await pc.setRemoteDescription(new RTCSessionDescription(data));
+                        await p.setRemoteDescription(new RTCSessionDescription(data));
+                        if (stale()) return;
                         ensureAudioTransceiver();
-                        const answer = await pc.createAnswer();
-                        await pc.setLocalDescription(answer);
-                        socket.emit('signal', { roomId: currentRoomId, data: answer });
-                        iceCandidateQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(e=>e));
-                        iceCandidateQueue = [];
+                        const answer = await p.createAnswer();
+                        if (stale()) return;
+                        await p.setLocalDescription(answer);
+                        if (stale()) return;
+                        if (socket) socket.emit('signal', { roomId: currentRoomId, data: answer });
+                        iceCandidateQueue.splice(0).forEach(c => p.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
                     } else if (data.type === 'answer') {
-                        await pc.setRemoteDescription(new RTCSessionDescription(data));
-                        iceCandidateQueue.forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)).catch(e=>e));
-                        iceCandidateQueue = [];
+                        await p.setRemoteDescription(new RTCSessionDescription(data));
+                        if (stale()) return;
+                        iceCandidateQueue.splice(0).forEach(c => p.addIceCandidate(new RTCIceCandidate(c)).catch(() => {}));
                     } else if (data.candidate) {
-                        if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(data)).catch(e=>e);
-                        else iceCandidateQueue.push(data); 
+                        if (p.remoteDescription) await p.addIceCandidate(new RTCIceCandidate(data)).catch(() => {});
+                        else iceCandidateQueue.push(data);
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error('mProtocol: ошибка обработки signal', e);
+                    // Согласование даже не началось (нет remoteDescription) — ждать нечего. Иначе это может быть
+                    // лишнее/дублирующее сообщение при уже идущем согласовании: не рвём, дожидаемся таймаута
+                    if (!stale() && !isConnected && !p.remoteDescription) failSession("Ошибка согласования соединения. Попробуйте снова.");
+                }
             });
         }
     }
 
+    // Полный сброс сетевой части сессии: сокет, соединение, таймеры, фоновый запрос ключей.
+    // Токен поколения растёт — все незавершённые await'ы запуска увидят, что сессия уже не актуальна.
+    function dropSignaling() {
+        sessionGen++;
+        sessionActive = false; offerBusy = false;
+        clearIceTimer();
+        if (iceFetchCtl) { const c = iceFetchCtl; iceFetchCtl = null; try { c.abort(); } catch(e) {} }
+        if (socket) {
+            const sk = socket; socket = null;
+            try { sk.off(); } catch(e) {}
+            try { sk.io.off('reconnect_failed'); } catch(e) {}
+            try { sk.disconnect(); } catch(e) {}
+        }
+        closePeerConnection();
+    }
+
+    // Сбой установки соединения: видимая ошибка + возврат на главный экран с полной очисткой
+    function failSession(msg) {
+        cancelSession();
+        showToast(msg, true);
+    }
+
     async function initHostSession() {
+        if (sessionActive) return; // двойной тап: вторая сессия/комната не нужна
+        sessionActive = true;
+        const gen = sessionGen;
         captureNickname(); requestNotificationPermission(); navTo('screen-host'); document.getElementById('room-code-display').innerText = '...';
-        await fetchIceConfig(); 
+        updateStatusUI('waiting');
+        await fetchIceConfig();
+        if (gen !== sessionGen) return; // пока ждали ключи, сессию отменили
         connectSocket(); isHost = true;
-        socket.emit('create-room');
-        socket.on('room-created', (id) => { currentRoomId = id; document.getElementById('room-code-display').innerText = id; setupWebRTC(true); });
-        socket.on('guest-joined', async () => {
-            if (!pc) return;
-            const offer = await pc.createOffer(); await pc.setLocalDescription(offer); socket.emit('signal', { roomId: currentRoomId, data: offer });
+        const sock = socket;
+        sock.on('room-created', (id) => {
+            if (gen !== sessionGen) return;
+            currentRoomId = id; document.getElementById('room-code-display').innerText = id; setupWebRTC(true);
         });
+        sock.on('guest-joined', async () => {
+            // Повторное событие не должно портить уже идущее/установленное согласование
+            if (gen !== sessionGen || !pc || offerBusy || isConnected) return;
+            const p = pc;
+            if (p.signalingState !== 'stable' && p.signalingState !== 'have-local-offer') return;
+            offerBusy = true;
+            try {
+                startIceTimer();
+                const offer = await p.createOffer();
+                if (gen !== sessionGen || p !== pc) return;
+                await p.setLocalDescription(offer);
+                if (gen !== sessionGen || p !== pc) return;
+                if (socket) socket.emit('signal', { roomId: currentRoomId, data: offer });
+            } catch (e) {
+                console.error('mProtocol: ошибка createOffer', e);
+                if (gen === sessionGen && !isConnected) failSession("Ошибка согласования соединения. Попробуйте снова.");
+            } finally { offerBusy = false; }
+        });
+        sock.on('error', (msg) => {
+            if (gen !== sessionGen) return;
+            failSession(typeof msg === 'string' && msg ? msg.slice(0, 120) : "Ошибка сервера сигналинга.");
+        });
+        sock.emit('create-room');
+    }
+
+    // Ошибка кода: красное поле с тряской и строка под ним; снимается при следующем вводе
+    let codeErrTimer = null;
+    function showCodeError(text) {
+        const input = document.getElementById('join-code-input');
+        const box = document.getElementById('code-error');
+        document.getElementById('code-error-text').textContent = String(text);
+        input.classList.remove('has-error'); void input.offsetWidth; // перезапуск анимации при повторной ошибке
+        input.classList.add('has-error');
+        box.classList.add('show');
+        if (navigator.vibrate) { try { navigator.vibrate(120); } catch(e) {} }
+        // Даём увидеть введённые цифры в красном, затем очищаем поле для нового ввода
+        clearTimeout(codeErrTimer);
+        codeErrTimer = setTimeout(() => {
+            if (input.classList.contains('has-error')) { input.value = ''; input.focus(); }
+        }, 700);
+    }
+    function clearCodeError() {
+        clearTimeout(codeErrTimer); codeErrTimer = null;
+        const input = document.getElementById('join-code-input');
+        if (input) input.classList.remove('has-error');
+        const box = document.getElementById('code-error');
+        if (box) box.classList.remove('show');
     }
 
     async function joinSession() {
         const input = document.getElementById('join-code-input'); const code = input.value.trim(); const btn = document.getElementById('btn-join');
         if (code.length !== 6) { input.style.borderColor = 'var(--danger)'; setTimeout(() => input.style.borderColor = '', 1000); return; }
+        if (sessionActive) return;
+        clearCodeError();
+        sessionActive = true;
+        const gen = sessionGen;
         requestNotificationPermission();
         btn.disabled = true; btn.innerText = "Запрос ключей...";
-        await fetchIceConfig(); 
+        await fetchIceConfig();
+        if (gen !== sessionGen) return; // «Назад» во время запроса: cancelSession уже вернул кнопку и экран
         btn.innerText = "Подключение..."; connectSocket(); isHost = false; currentRoomId = code;
         setupWebRTC(false);
-        socket.emit('join-room', code);
-        socket.on('join-success', () => { });
-        socket.on('error', (msg) => { alert(msg || "Неверный код"); input.value = ''; input.focus(); btn.disabled = false; btn.innerText = "Установить связь"; socket.disconnect(); socket = null; updateStatusUI('offline'); });
+        const sock = socket;
+        sock.on('join-success', () => { });
+        sock.on('error', (msg) => {
+            if (gen !== sessionGen) return;
+            // Неверный код: полностью закрываем сокет и RTCPeerConnection, иначе каждая попытка оставляла бы живое соединение
+            const text = (typeof msg === 'string' && msg) ? msg.slice(0, 120) : "Неверный код";
+            dropSignaling();
+            btn.disabled = false; btn.innerText = "Установить связь";
+            updateStatusUI('offline');
+            showCodeError(text); // поле очистится само через ~0.7 с, после того как ошибка будет замечена
+        });
+        sock.emit('join-room', code);
+        startIceTimer();
     }
 
     // Остановка записи голоса: гасим микрофон и забываем записанные куски
@@ -971,11 +1226,18 @@
             try { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); } catch(e) {}
             try { mediaRecorder.stream.getTracks().forEach(track => track.stop()); } catch(e) {}
         }
-        mediaRecorder = null; audioChunks = []; isRecording = false;
+        clearTimeout(recLimitTimer); recLimitTimer = null;
+        mediaRecorder = null; audioChunks = []; isRecording = false; isStartingRecord = false;
         document.getElementById('btn-voice').classList.remove('recording');
     }
 
     function stopSessionTimers() { clearInterval(pingInterval); pingInterval = null; }
+
+    // Отправка по каналу без исключений: на закрывающемся канале dc.send бросает ошибку
+    function safeSend(data) {
+        if (!dc || dc.readyState !== 'open') return false;
+        try { dc.send(data); return true; } catch(e) { return false; }
+    }
 
     // Закрывает канал и соединение, сбрасывает буферы передачи файлов и данные плашки
     function closePeerConnection() {
@@ -983,7 +1245,7 @@
         if (dc) { dc.onopen = dc.onclose = dc.onmessage = null; try { dc.close(); } catch(e) {} dc = null; }
         if (pc) { pc.oniceconnectionstatechange = null; pc.onicecandidate = null; pc.ondatachannel = null; pc.ontrack = null; try { pc.close(); } catch(e) {} pc = null; }
         audioTransceiver = null; remoteCallStream = null;
-        receiveBuffer = []; receiveMeta = null; receivedSize = 0; isSendingFile = false;
+        receiveBuffer = []; receiveMeta = null; receivedSize = 0; isSendingFile = false; currentSendId = null;
         document.getElementById('btn-attach').classList.remove('active', 'sending');
         sessionStartTs = null; connInfo = null; closeConnPop();
         connUnstable = false; // иначе после обрыва и выхода в следующей сессии первое подключение написало бы «Связь восстановлена»
@@ -1004,13 +1266,13 @@
     }
 
     function cancelSession() {
-        if (socket) { socket.disconnect(); socket = null; }
-        closePeerConnection();
+        dropSignaling();
         stopSessionTimers();
         abortRecording();
+        closeViewer(); // окно просмотра и его содержимое (blob) не должны пережить чат
         activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = [];
         currentRoomId = null; isConnected = false; updateStatusUI('offline'); navTo('screen-home');
-        document.getElementById('join-code-input').value = ''; document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
+        clearCodeError(); document.getElementById('join-code-input').value = ''; document.getElementById('btn-join').disabled = false; document.getElementById('btn-join').innerText = "Установить связь";
         document.getElementById('messages').innerHTML = '<div class="msg system">Соединение установлено<br>P2P канал активен</div>';
         cancelReply(); cancelStagedFile();
         wipeSessionTraces();
@@ -1058,6 +1320,7 @@
                 if (!receiveMeta) return;
                 if (receivedSize + e.data.byteLength > receiveMeta.size) {
                     sysLog("Ошибка: файл больше заявленного размера.", true);
+                    markFileFailed(`msg-${receiveMeta.id}`);
                     receiveBuffer = []; receiveMeta = null; receivedSize = 0; return;
                 }
                 receiveBuffer.push(e.data); receivedSize += e.data.byteLength;
@@ -1065,7 +1328,7 @@
                 return;
             }
 
-            if (e.data.startsWith('__PING__')) { dc.send(e.data.replace('__PING__', '__PONG__')); return; }
+            if (e.data.startsWith('__PING__')) { safeSend(e.data.replace('__PING__', '__PONG__')); return; }
             if (e.data.startsWith('__PONG__')) {
                 const sentAt = Number(e.data.split(':')[1]);
                 const rtt = performance.now() - sentAt;
@@ -1083,7 +1346,7 @@
                     if (typeof payload.text !== 'string' || payload.text.length > 10000) return;
                     const msgId = (typeof payload.id === 'string' && MSG_ID_RE.test(payload.id)) ? payload.id : null;
                     renderMessage(payload.text, 'theirs', nick, msgId, replyTo);
-                    if (msgId && dc.readyState === 'open') dc.send(JSON.stringify({ type: 'ack', id: msgId }));
+                    if (msgId) safeSend(JSON.stringify({ type: 'ack', id: msgId }));
                 } else if (payload.type === 'ack') {
                     const ackSpan = document.getElementById(`ack-${payload.id}`);
                     if (ackSpan) {
@@ -1093,20 +1356,30 @@
                 } else if (payload.type === 'file-meta') {
                     if (typeof payload.id !== 'string' || !FILE_ID_RE.test(payload.id)) return;
                     if (typeof payload.name !== 'string' || !Number.isFinite(payload.size) || payload.size < 0 || payload.size > MAX_FILE_SIZE) return;
+                    // Имя недоверенное: убираем управляющие символы и символы смены направления текста (RLO-подмена расширения вроде «fdp.exe»)
+                    const cleanName = payload.name.replace(/[\u0000-\u001F\u007F‎‏‪-‮⁦-⁩]/g, '').trim().slice(0, 255) || 'file';
                     const meta = {
                         id: payload.id,
-                        name: payload.name.slice(0, 255),
+                        name: cleanName,
                         size: payload.size,
-                        mime: typeof payload.mime === 'string' ? payload.mime.slice(0, 100) : ''
+                        mime: typeof payload.mime === 'string' ? payload.mime.slice(0, 100) : '',
+                        voice: typeof payload.voice === 'boolean' ? payload.voice : undefined // старые клиенты флаг не шлют
                     };
+                    const dims = validDims(payload.w, payload.h);
+                    if (receiveMeta) markFileFailed(`msg-${receiveMeta.id}`); // предыдущий файл не дошёл, а собеседник начал новый
                     receiveBuffer = []; receiveMeta = meta; receivedSize = 0;
-                    renderFileMessage(meta.name, meta.size, 'theirs', nick, `msg-${meta.id}`, replyTo);
+                    renderFileMessage(meta.name, meta.size, 'theirs', nick, `msg-${meta.id}`, replyTo, meta.mime, dims, meta.voice);
                     playNotificationSound(); triggerNativeAlert("Новый файл", meta.name);
                 } else if (payload.type === 'file-eof') {
                     if (!receiveMeta || receiveMeta.id !== payload.id) return;
+                    if (receivedSize !== receiveMeta.size) { // файл пришёл неполным — не выдаём его за готовый
+                        sysLog("Ошибка: файл получен не полностью.", true);
+                        markFileFailed(`msg-${receiveMeta.id}`);
+                        receiveBuffer = []; receiveMeta = null; receivedSize = 0; return;
+                    }
                     const blob = new Blob(receiveBuffer, { type: receiveMeta.mime });
                     const url = URL.createObjectURL(blob);
-                    markFileComplete(`msg-${receiveMeta.id}`, url, receiveMeta.mime);
+                    markFileComplete(`msg-${receiveMeta.id}`, url, receiveMeta.mime, blob);
                     receiveBuffer = []; receiveMeta = null; receivedSize = 0;
                 } else if (typeof payload.type === 'string' && payload.type.startsWith('call-')) {
                     handleCallSignal(payload);
@@ -1121,12 +1394,13 @@
         if (isConnected) return;
         if (connUnstable) { connUnstable = false; sysLog("Связь восстановлена."); }
         isConnected = true; if (!sessionStartTs) sessionStartTs = Date.now();
+        clearIceTimer();
         updateStatusUI('connected'); navTo('screen-chat');
         showSoundHint();
         document.getElementById('ping-value').innerText = '-- ms';
         stopSessionTimers();
         // performance.now(): монотонные часы, не зависят от перевода системного времени
-        pingInterval = setInterval(() => { if (dc && dc.readyState === 'open') dc.send(`__PING__:${performance.now()}`); }, 2000);
+        pingInterval = setInterval(() => { safeSend(`__PING__:${performance.now()}`); }, 2000);
         refreshConnInfo();
 
         if(socket) { socket.disconnect(); socket = null; }
@@ -1135,13 +1409,22 @@
     // final=false: временный сбой ICE ('disconnected'), соединение может восстановиться — ничего не закрываем.
     // final=true: канал закрыт или ICE 'failed' — освобождаем соединение и микрофон.
     function handleConnectionDrop(final = false) {
+        // Соединение ни разу не поднималось: чат ещё скрыт, пользователь видит экран кода. Окончательный сбой —
+        // понятная ошибка и возврат на главный экран (раньше всё молча зависало); временный — ждём ICE или таймаут.
+        if (!sessionStartTs) {
+            if (final) failSession("Не удалось установить соединение. Попробуйте ещё раз.");
+            return;
+        }
         const wasActive = isConnected;
         isConnected = false; stopSessionTimers(); updateStatusUI('offline');
         // Временный обрыв — «нестабильна», окончательный — «разорвано» (в том числе если до этого связь уже была нестабильна)
-        if (wasActive || (final && connUnstable)) sysLog(final ? "Соединение разорвано." : "Связь нестабильна…", true);
+        if (wasActive || (final && connUnstable)) sysLog(final ? "Соединение разорвано" : "Связь нестабильна…", true, final ? "Обновите страницу, чтобы начать заново" : "");
         connUnstable = !final && (wasActive || connUnstable);
         if (isSendingFile || receiveMeta) {
-            sysLog("Ошибка: Передача файла прервана.", true); isSendingFile = false; receiveBuffer = []; receiveMeta = null;
+            sysLog("Ошибка: Передача файла прервана.", true);
+            if (receiveMeta) markFileFailed(`msg-${receiveMeta.id}`);
+            if (currentSendId) { markFileFailed(`msg-${currentSendId}`); currentSendId = null; }
+            isSendingFile = false; receiveBuffer = []; receiveMeta = null;
             document.getElementById('btn-attach').classList.remove('active', 'sending');
         }
         if (final && callState !== 'idle') sysLog("Звонок прерван: соединение потеряно.", true);
@@ -1221,6 +1504,7 @@
     // --- File & UI Core ---
     const CHUNK_SIZE = 16384; 
     let isSendingFile = false;
+    let currentSendId = null; // id исходящего файла в процессе передачи (чтобы пометить его при обрыве)
     let stagedFile = null;
 
     function formatBytes(bytes) {
@@ -1307,35 +1591,308 @@
         }
     }
 
-    function renderFileMessage(name, size, sender, nick, msgId, replyData = null) {
+    // Размеры фото приходят от собеседника — считаем недоверенными: только целые 1..8000
+    function validDims(w, h) {
+        if (!Number.isInteger(w) || !Number.isInteger(h)) return null;
+        if (w < 1 || h < 1 || w > 8000 || h > 8000) return null;
+        return { w, h };
+    }
+
+    // Размеры локального фото (для плейсхолдера у собеседника). Любая ошибка — null, отправка не ломается.
+    function getImageDims(file) {
+        return new Promise(resolve => {
+            if (!PREVIEW_IMAGE_RE.test(file.type)) return resolve(null);
+            if (file.size > 12 * 1024 * 1024) return resolve(null); // не декодируем огромные фото ради размера: слабым телефонам это тяжело
+            let url; try { url = URL.createObjectURL(file); } catch (e) { return resolve(null); }
+            const im = new Image();
+            const done = v => { clearTimeout(t); URL.revokeObjectURL(url); resolve(v); };
+            const t = setTimeout(() => done(null), 3000);
+            im.onload = () => {
+                let w = im.naturalWidth, h = im.naturalHeight;
+                if (!(w > 0 && h > 0)) return done(null);
+                const k = Math.min(1, 8000 / w, 8000 / h);
+                done(validDims(Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))));
+            };
+            im.onerror = () => done(null);
+            im.src = url;
+        });
+    }
+
+    const DL_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"></path><polyline points="7 11 12 16 17 11"></polyline><path d="M5 20h14"></path></svg>';
+
+    const VIDEO_RE = /^video\/(mp4|webm|ogg|quicktime)$/;
+    const AUDIO_RE = /^audio\/(ogg|webm|mpeg|mp3|wav|x-wav|mp4|aac|x-m4a|flac)$/;
+    const TEXT_EXTS = new Set(['txt','md','json','log','csv','xml','yml','yaml','ini','toml','cfg','conf','js','ts','py','html','htm','css','sh','sql','c','h','cpp','java','go','rs','php','rb','kt','swift']);
+    const VOICE_NAME = 'Голосовое сообщение';
+    const BADGE_GROUPS = {
+        pdf: ['pdf'], arc: ['zip','rar','7z','tar','gz','tgz','bz2','xz'], doc: ['doc','docx','odt','rtf'],
+        xls: ['xls','xlsx','ods','csv'], ppt: ['ppt','pptx','odp']
+    };
+
+    function fileExt(name) { const m = /\.([A-Za-z0-9]{1,8})$/.exec(typeof name === 'string' ? name : ''); return m ? m[1].toLowerCase() : ''; }
+
+    // MIME и имя приходят от собеседника — используются только для выбора безопасного способа показа (белые списки)
+    // voice: true/false, если отправитель явно пометил файл; undefined у старых клиентов — тогда по имени, как раньше
+    function fileKind(mime, name, voice) {
+        const m = (typeof mime === 'string' ? mime : '').split(';')[0].trim().toLowerCase();
+        if (PREVIEW_IMAGE_RE.test(m)) return 'image';
+        if (VIDEO_RE.test(m)) return 'video';
+        if (AUDIO_RE.test(m)) return (typeof voice === 'boolean' ? voice : name === VOICE_NAME) ? 'voice' : 'audio';
+        if (m === 'application/pdf' || fileExt(name) === 'pdf') return 'pdf';
+        if (TEXT_EXTS.has(fileExt(name)) || m.startsWith('text/') || m === 'application/json') return 'text';
+        return 'generic';
+    }
+
+    function badgeGroup(kind, ext) {
+        if (kind === 'audio') return 'audio';
+        if (kind === 'text' && !BADGE_GROUPS.xls.includes(ext)) return 'code';
+        for (const g in BADGE_GROUPS) if (BADGE_GROUPS[g].includes(ext)) return g;
+        return 'other';
+    }
+
+    function renderFileMessage(name, size, sender, nick, msgId, replyData = null, mime = '', dims = null, voice = undefined) {
         const box = document.getElementById('messages');
         const wrapperDiv = buildMessageWrapper(sender, nick, msgId, name);
         const msgDiv = document.createElement('div'); msgDiv.className = `msg`;
-        
+        const kind = fileKind(mime, name, voice);
+        const isImage = kind === 'image', isVideo = kind === 'video';
+        const boxClass = isImage ? ' is-image' : isVideo ? ' is-image is-video' : '';
+
         const replyHtml = buildReplyBlock(replyData);
 
         msgDiv.innerHTML = replyHtml + `
-            <div class="file-transfer-box">
+            <div class="file-transfer-box${boxClass}">
                 <div class="file-info">
                     <div class="file-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></div>
                     <div class="file-details"><span class="file-name"></span><span class="file-size"></span></div>
                 </div>
                 <div class="file-progress-container"><div class="file-progress-fill"></div></div>
                 <div class="preview-container"></div>
+                <a href="#" class="btn-open">Открыть</a>
                 <a href="#" class="btn-download">Скачать</a>
             </div>`;
         // Недоверенные значения (имя файла, id) — только через DOM-свойства
         const nameEl = msgDiv.querySelector('.file-name'); nameEl.textContent = name; nameEl.title = name;
         msgDiv.querySelector('.file-size').textContent = formatBytes(size);
         msgDiv.querySelector('.file-progress-fill').id = `prog-${msgId}`;
-        msgDiv.querySelector('.preview-container').id = `preview-container-${msgId}`;
+        if (typeof voice === 'boolean') msgDiv.querySelector('.file-transfer-box').dataset.voice = String(voice);
+        const pc = msgDiv.querySelector('.preview-container'); pc.id = `preview-container-${msgId}`;
         const dlBtn = msgDiv.querySelector('.btn-download'); dlBtn.id = `dl-${msgId}`; dlBtn.download = name;
+        if (isImage) {
+            // Плейсхолдер нужного размера, чтобы вёрстка не прыгала, когда фото догрузится
+            if (dims) {
+                const s = Math.min(1, 300 / dims.w, 340 / dims.h);
+                pc.style.setProperty('--pw', Math.max(1, Math.round(dims.w * s)) + 'px');
+                pc.style.setProperty('--ar', `${dims.w} / ${dims.h}`);
+                pc.dataset.sized = '1';
+            }
+        }
+        if (isImage || isVideo) {
+            if (isVideo) pc.classList.add('natural');
+            dlBtn.classList.add('btn-download-icon'); dlBtn.title = 'Скачать'; dlBtn.setAttribute('aria-label', 'Скачать');
+            dlBtn.innerHTML = DL_ICON_SVG;
+        } else if (kind !== 'voice') {
+            // Цветной бейдж по расширению вместо одной общей иконки
+            const ext = fileExt(name);
+            if (ext) {
+                const icon = msgDiv.querySelector('.file-icon');
+                icon.dataset.t = badgeGroup(kind, ext);
+                icon.textContent = ext.slice(0, 4).toUpperCase();
+                icon.classList.add('ext-badge');
+            }
+        }
         wrapperDiv.appendChild(msgDiv); box.appendChild(wrapperDiv); box.scrollTop = box.scrollHeight;
     }
 
     function updateFileProgress(msgId, percent) { const prog = document.getElementById(`prog-${msgId}`); if (prog) prog.style.width = `${percent}%`; }
 
-    function markFileComplete(msgId, objectUrl, mimeType) {
+    // Идемпотентно: у отправителя превью появляется сразу, при завершении передачи повторно не добавляется
+    function attachImagePreview(msgId, objectUrl) {
+        const pc = document.getElementById(`preview-container-${msgId}`);
+        if (!pc || pc.querySelector('img')) return;
+        const msgBox = document.getElementById('messages');
+        const stickToBottom = msgBox.scrollHeight - msgBox.scrollTop - msgBox.clientHeight < 200;
+        const link = document.createElement('a');
+        link.href = objectUrl; link.target = "_blank"; link.rel = "noopener noreferrer"; link.title = "Открыть оригинал"; link.className = "image-preview-link";
+        const img = document.createElement('img'); img.src = objectUrl; img.className = 'image-preview'; img.alt = ''; img.decoding = 'async';
+        img.onload = () => {
+            if (!pc.dataset.sized) pc.classList.add('natural'); // размеры не пришли — берём естественные
+            if (stickToBottom) msgBox.scrollTop = msgBox.scrollHeight;
+        };
+        img.onerror = () => { pc.classList.add('failed'); }; // не декодируется (битый файл / неверный MIME) — остаётся подпись и кнопка
+        link.appendChild(img); pc.appendChild(link);
+    }
+
+    function attachVideoPreview(pc, objectUrl, stickToBottom) {
+        if (pc.querySelector('video')) return;
+        const msgBox = document.getElementById('messages');
+        const v = document.createElement('video');
+        v.className = 'video-preview'; v.controls = true; v.preload = 'metadata'; v.playsInline = true;
+        v.src = objectUrl + '#t=0.001'; // показать первый кадр вместо чёрного прямоугольника
+        v.onloadedmetadata = () => { if (stickToBottom) msgBox.scrollTop = msgBox.scrollHeight; };
+        v.onerror = () => { pc.classList.add('failed'); }; // кодек не поддерживается — остаётся кнопка скачивания
+        pc.appendChild(v);
+    }
+
+    // Начало текстового файла: UTF-8, иначе windows-1251 (частый случай для русских .txt). Бинарные данные -> null
+    function decodeTextHead(buf, truncated) {
+        const u8 = new Uint8Array(buf);
+        let bad = 0;
+        for (let i = 0; i < u8.length; i++) { const c = u8[i]; if (c === 0) return null; if (c < 9 || (c > 13 && c < 32 && c !== 27)) bad++; }
+        if (u8.length && bad / u8.length > 0.02) return null;
+        for (let cut = 0; cut <= (truncated ? 3 : 0); cut++) {
+            try { return new TextDecoder('utf-8', { fatal: true }).decode(u8.subarray(0, u8.length - cut)); } catch (e) {}
+        }
+        try { return new TextDecoder('windows-1251').decode(u8); } catch (e) { return null; }
+    }
+
+    // --- Просмотр текстовых файлов и HTML прямо в чате ---
+    // HTML собеседника НИКОГДА не открывается как text/html blob (он получил бы права этой страницы).
+    // Он очищается через инертный DOMParser, запирается в iframe sandbox="" (без скриптов) и закрывается CSP без сети.
+    const VIEW_MAX_BYTES = 2 * 1024 * 1024;
+    const VIEW_INSTANT_BYTES = 128 * 1024; // до этого размера содержимое вставляется сразу при открытии окна
+    const VIEWER_CSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; form-action 'none'; base-uri 'none'";
+
+    function isHtmlName(name) { const e = fileExt(name); return e === 'html' || e === 'htm'; }
+
+    function sanitizeHtmlForView(src) {
+        const doc = new DOMParser().parseFromString(src, 'text/html'); // инертный документ: скрипты не исполняются, ресурсы не грузятся
+        doc.querySelectorAll('script,iframe,frame,frameset,object,embed,applet,link,base,meta,form,noscript,audio,video,source,track,portal').forEach(e => e.remove());
+        // Картинки не из data: всё равно не загрузятся — заменяем их текстом вместо значка битой картинки
+        doc.querySelectorAll('img').forEach(img => {
+            if (/^data:image\//i.test(img.getAttribute('src') || '')) return;
+            const alt = (img.getAttribute('alt') || '').trim().slice(0, 100);
+            img.replaceWith(doc.createTextNode(alt ? `[${alt}]` : '[изображение]'));
+        });
+        doc.querySelectorAll('*').forEach(el => {
+            for (const attr of Array.from(el.attributes)) {
+                const n = attr.name.toLowerCase();
+                if (n.startsWith('on') || ['srcset', 'action', 'formaction', 'poster', 'background', 'ping', 'xlink:href', 'srcdoc'].includes(n)) el.removeAttribute(attr.name);
+            }
+            if (el.hasAttribute('href')) { // ссылки отключаем: переход по ним был бы сетевым запросом; адрес оставляем в подсказке
+                if (el.tagName === 'A') el.title = el.getAttribute('href').slice(0, 200);
+                el.removeAttribute('href');
+            }
+            if (el.hasAttribute('src') && !/^data:image\//i.test(el.getAttribute('src'))) el.removeAttribute('src');
+        });
+        // Дополнительно к CSP: убираем сетевые обращения из CSS
+        const cleanCss = t => t.replace(/@import[^;{]*;?/gi, '').replace(/url\(\s*(?!['"]?data:image\/)[^)]*\)/gi, 'none');
+        doc.querySelectorAll('style').forEach(st => { st.textContent = cleanCss(st.textContent); });
+        doc.querySelectorAll('[style]').forEach(el => el.setAttribute('style', cleanCss(el.getAttribute('style'))));
+        const head = doc.head || doc.documentElement.insertBefore(doc.createElement('head'), doc.documentElement.firstChild);
+        const csp = doc.createElement('meta'); csp.httpEquiv = 'Content-Security-Policy'; csp.content = VIEWER_CSP;
+        const cs = doc.createElement('meta'); cs.setAttribute('charset', 'utf-8');
+        head.prepend(csp); head.prepend(cs); // CSP — первым после charset, до любого содержимого
+        return '<!doctype html>' + doc.documentElement.outerHTML;
+    }
+
+    let viewerEl = null, viewerKeyHandler = null, viewerHistoryPushed = false, viewerPrevFocus = null;
+    // fromPop: закрытие по системной кнопке «Назад» (запись в истории уже снята браузером)
+    function closeViewer(fromPop = false) {
+        if (viewerKeyHandler) { document.removeEventListener('keydown', viewerKeyHandler); viewerKeyHandler = null; }
+        if (viewerHistoryPushed) { viewerHistoryPushed = false; if (fromPop !== true) { try { history.back(); } catch (e) {} } }
+        const el = viewerEl; viewerEl = null;
+        if (el) {
+            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduce) el.remove();
+            else { el.classList.add('closing'); setTimeout(() => el.remove(), 170); }
+        }
+        if (viewerPrevFocus && document.contains(viewerPrevFocus)) { try { viewerPrevFocus.focus({ preventScroll: true }); } catch (e) {} }
+        viewerPrevFocus = null;
+    }
+    window.addEventListener('popstate', () => { if (viewerEl) closeViewer(true); });
+
+    async function openTextViewer(name, blob, downloadUrl = null) {
+        closeViewer();
+        viewerPrevFocus = document.activeElement;
+        const overlay = document.createElement('div'); overlay.className = 'viewer-overlay';
+        const boxEl = document.createElement('div'); boxEl.className = 'viewer-box';
+        boxEl.setAttribute('role', 'dialog'); boxEl.setAttribute('aria-modal', 'true'); boxEl.setAttribute('aria-label', name);
+        const head = document.createElement('div'); head.className = 'viewer-head';
+        const title = document.createElement('div'); title.className = 'viewer-title'; title.textContent = name; title.title = name;
+        const toggle = document.createElement('button'); toggle.className = 'viewer-btn'; toggle.style.display = 'none';
+        const closeBtn = document.createElement('button'); closeBtn.className = 'viewer-btn'; closeBtn.textContent = '✕'; closeBtn.setAttribute('aria-label', 'Закрыть');
+        head.append(title, toggle);
+        if (downloadUrl) {
+            const dl = document.createElement('a'); dl.className = 'viewer-btn'; dl.textContent = 'Скачать'; dl.href = downloadUrl; dl.download = name;
+            head.appendChild(dl);
+        }
+        head.appendChild(closeBtn);
+        const body = document.createElement('div'); body.className = 'viewer-body';
+        const note = document.createElement('div'); note.className = 'viewer-note';
+        boxEl.append(head, body, note); overlay.appendChild(boxEl); document.body.appendChild(overlay);
+        viewerEl = overlay;
+        try { history.pushState({ mpViewer: 1 }, ''); viewerHistoryPushed = true; } catch (e) {} // «Назад» на телефоне закрывает окно, а не уводит из чата
+        closeBtn.onclick = () => closeViewer();
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeViewer(); });
+        viewerKeyHandler = e => { if (e.key === 'Escape') closeViewer(); };
+        document.addEventListener('keydown', viewerKeyHandler);
+        closeBtn.focus({ preventScroll: true });
+
+        // Файл читаем сразу, но содержимое вставляем только после окончания анимации — тяжёлый разбор/отрисовка не должны её рвать
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const animDone = reduceMotion ? Promise.resolve() : new Promise(res => { boxEl.addEventListener('animationend', res, { once: true }); setTimeout(res, 450); });
+        const truncated = blob.size > VIEW_MAX_BYTES;
+        let buf = null;
+        try { buf = await blob.slice(0, VIEW_MAX_BYTES).arrayBuffer(); } catch (e) {}
+        // Компромисс: небольшие файлы показываем сразу (разбор почти бесплатен, задержка выглядела бы как «загрузка»),
+        // тяжёлые ждут конца анимации, чтобы не рвать её
+        if (blob.size > VIEW_INSTANT_BYTES) await animDone;
+        else await new Promise(r => requestAnimationFrame(r)); // один кадр: сначала рисуется окно, затем содержимое
+        if (viewerEl !== overlay) return; // окно закрыли, пока читали файл
+        const text = buf ? decodeTextHead(buf, truncated) : null;
+        if (text === null) { body.textContent = 'Файл не удалось показать как текст (возможно, он двоичный). Его можно скачать.'; body.style.padding = '14px'; return; }
+
+        const pre = document.createElement('pre'); pre.textContent = text; // только textContent
+        const showSource = () => { body.replaceChildren(pre); toggle.textContent = 'Показать страницу'; note.textContent = truncated ? 'Показаны первые 2 МБ файла' : ''; };
+        if (isHtmlName(name)) {
+            const frame = document.createElement('iframe');
+            frame.setAttribute('sandbox', ''); // пустой sandbox: ни скриптов, ни форм, ни навигации, ни доступа к странице
+            frame.srcdoc = sanitizeHtmlForView(text);
+            const showPage = () => { body.replaceChildren(frame); toggle.textContent = 'Исходник'; note.textContent = 'Скрипты, внешние ресурсы и ссылки отключены' + (truncated ? '. Показаны первые 2 МБ' : ''); };
+            let page = true; toggle.style.display = '';
+            toggle.onclick = () => { page = !page; page ? showPage() : showSource(); };
+            showPage();
+        } else {
+            showSource(); toggle.style.display = 'none';
+            note.textContent = truncated ? 'Показаны первые 2 МБ файла' : '';
+        }
+        note.style.display = note.textContent ? '' : 'none';
+        toggle.addEventListener('click', () => { note.style.display = note.textContent ? '' : 'none'; });
+    }
+
+    // PDF: сигнатура проверяется, тип задаём сами (MIME собеседника не доверяем); открывается встроенным просмотрщиком браузера в новой вкладке
+    async function preparePdfLink(openBtn, blob) {
+        try {
+            const head = new TextDecoder('latin1').decode(await blob.slice(0, 5).arrayBuffer());
+            if (head !== '%PDF-') return;
+            const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+            activeObjectUrls.push(url);
+            const msgBox = document.getElementById('messages');
+            const stick = msgBox.scrollHeight - msgBox.scrollTop - msgBox.clientHeight < 200;
+            openBtn.href = url; openBtn.target = '_blank'; openBtn.rel = 'noopener noreferrer'; openBtn.style.display = 'block';
+            if (stick) msgBox.scrollTop = msgBox.scrollHeight;
+        } catch (e) { /* остаётся только «Скачать» */ }
+    }
+
+    // Передача оборвалась или файл пришёл неполным: снимаем скелетон и прогресс, подписываем сообщение
+    function markFileFailed(msgId) {
+        const prog = document.getElementById(`prog-${msgId}`);
+        const box = prog ? prog.closest('.file-transfer-box') : null;
+        if (!box || box.dataset.done) return; // уже завершён или уже помечен
+        box.dataset.done = 'failed'; box.classList.add('transfer-failed');
+        const sizeEl = box.querySelector('.file-size'); if (sizeEl) sizeEl.textContent += ' · прервано';
+        const progC = box.querySelector('.file-progress-container'); if (progC) progC.style.display = 'none';
+    }
+
+    // Полоса прогресса гаснет плавно, а не исчезает рывком
+    function hideProgress(el) {
+        if (!el) return;
+        el.style.transition = 'opacity 0.2s ease-out'; el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 220);
+    }
+
+    function markFileComplete(msgId, objectUrl, mimeType, blob = null) {
         // если пользователь был внизу чата — после появления превью доскроллим до конца
         const msgBox = document.getElementById('messages');
         const stickToBottom = msgBox.scrollHeight - msgBox.scrollTop - msgBox.clientHeight < 200;
@@ -1343,42 +1900,65 @@
         if (objectUrl) {
             activeObjectUrls.push(objectUrl); const btn = document.getElementById(`dl-${msgId}`);
             if (btn) {
-                btn.href = objectUrl; btn.style.display = 'block';
                 const previewContainer = document.getElementById(`preview-container-${msgId}`);
+                const transferBox = previewContainer ? previewContainer.parentElement : null;
+                const nameEl = transferBox ? transferBox.querySelector('.file-name') : null;
+                const voiceAttr = transferBox ? transferBox.dataset.voice : undefined;
+                const kind = fileKind(mimeType, nameEl ? nameEl.textContent : '', voiceAttr === undefined ? undefined : voiceAttr === 'true');
+                if (transferBox) transferBox.dataset.done = '1';
+                const iconBtn = kind === 'image' || kind === 'video';
+                btn.href = objectUrl; btn.style.display = iconBtn ? 'flex' : 'block';
                 if (previewContainer) {
-                    if (typeof mimeType === 'string' && PREVIEW_IMAGE_RE.test(mimeType)) {
-                        const link = document.createElement('a');
-                        link.href = objectUrl; link.target = "_blank"; link.rel = "noopener noreferrer"; link.title = "Открыть оригинал"; link.className = "image-preview-link";
-                        const img = document.createElement('img'); img.src = objectUrl; img.className = 'image-preview';
-                        img.onload = () => { if (stickToBottom) msgBox.scrollTop = msgBox.scrollHeight; };
-                        link.appendChild(img); previewContainer.appendChild(link);
-                    } else if (mimeType && (mimeType.startsWith('audio/ogg') || mimeType.startsWith('audio/webm') || mimeType.startsWith('audio/mp3') || mimeType.startsWith('audio/wav'))) {
+                    const fileProgC = transferBox.querySelector('.file-progress-container');
+                    const openBtn = transferBox.querySelector('.btn-open');
+                    if (kind === 'image') {
+                        attachImagePreview(msgId, objectUrl);
+                        hideProgress(fileProgC);
+                    } else if (kind === 'video') {
+                        attachVideoPreview(previewContainer, objectUrl, stickToBottom);
+                        hideProgress(fileProgC);
+                    } else if (kind === 'audio' || kind === 'voice') {
                         const audio = document.createElement('audio');
                         audio.controls = true;
                         audio.src = objectUrl;
                         audio.className = 'audio-player';
                         previewContainer.appendChild(audio);
-                        
-                        // Hide download button for voice messages
-                        btn.style.display = 'none';
-                        
-                        // Clean up UI to make it look like an organic voice message
-                        const transferBox = previewContainer.parentElement;
-                        const fileInfo = transferBox.querySelector('.file-info');
-                        const fileProg = transferBox.querySelector('.file-progress-container');
-                        if (fileInfo) fileInfo.style.display = 'none';
-                        if (fileProg) fileProg.style.display = 'none';
-                        transferBox.style.gap = '0';
+                        if (kind === 'audio') btn.style.display = 'none'; // скачать можно через меню «⋮» самого плеера
+                        if (kind === 'voice') {
+                            // Hide download button for voice messages
+                            btn.style.display = 'none';
+                            // Clean up UI to make it look like an organic voice message
+                            const fileInfo = transferBox.querySelector('.file-info');
+                            if (fileInfo) fileInfo.style.display = 'none';
+                            transferBox.style.gap = '0';
+                        }
+                        hideProgress(fileProgC);
                         if (stickToBottom) msgBox.scrollTop = msgBox.scrollHeight;
+                    } else if (kind === 'text') {
+                        if (blob && openBtn) {
+                            const fname = nameEl ? nameEl.textContent : 'file';
+                            if (isHtmlName(fname)) openBtn.textContent = 'Безопасный просмотр';
+                            openBtn.style.display = 'block';
+                            openBtn.onclick = e => { e.preventDefault(); openTextViewer(fname, blob, objectUrl); };
+                        }
+                    } else if (kind === 'pdf') {
+                        if (blob && openBtn) preparePdfLink(openBtn, blob);
                     }
+                    // Появились кнопки / превью, чат стал выше: если пользователь был внизу, долистываем до конца
+                    if (stickToBottom) requestAnimationFrame(() => { msgBox.scrollTop = msgBox.scrollHeight; });
                 }
             }
         }
     }
 
-    function sysLog(text, isError = false) {
+    function sysLog(text, isError = false, hint = '') {
+        // Чат скрыт (до соединения или после возврата на главный экран): запись в него никто не увидит и она
+        // осталась бы в DOM до следующей сессии — показываем всплывающее уведомление
+        const chatScreen = document.getElementById('screen-chat');
+        if (!chatScreen || !chatScreen.classList.contains('active')) { showToast(text, isError); return; }
         const box = document.getElementById('messages'); const sysDiv = document.createElement('div'); 
-        sysDiv.className = `msg system ${isError ? 'error' : ''}`; sysDiv.innerText = text;
+        sysDiv.className = `msg system ${isError ? 'error' : ''}`; sysDiv.textContent = text;
+        if (hint) { const h = document.createElement('span'); h.className = 'sys-hint'; h.textContent = hint; sysDiv.appendChild(h); }
         if(box) { box.appendChild(sysDiv); box.scrollTop = box.scrollHeight; }
     }
 
@@ -1386,13 +1966,20 @@
     async function sendMessage() {
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
-        if (!dc || dc.readyState !== 'open') return;
+        if (!dc || dc.readyState !== 'open') {
+            if (text || stagedFile) sysLog("Нет соединения: сообщение не отправлено.", true);
+            return;
+        }
 
         const currentReplyData = activeReply ? { id: activeReply.id, nick: activeReply.nick, text: activeReply.text } : null;
 
         if (text) {
             const msgId = 'msg-' + crypto.randomUUID();
-            dc.send(JSON.stringify({ type: 'msg', nick: sessionNickname, text: text, id: msgId, replyTo: currentReplyData }));
+            // Не рисуем «отправленное» сообщение, если оно на самом деле не ушло (текст остаётся в поле)
+            if (!safeSend(JSON.stringify({ type: 'msg', nick: sessionNickname, text: text, id: msgId, replyTo: currentReplyData }))) {
+                sysLog("Не удалось отправить сообщение.", true);
+                return;
+            }
             renderMessage(text, 'mine', sessionNickname, msgId, currentReplyData);
             
             input.value = ''; 
@@ -1411,79 +1998,152 @@
         }
     }
 
-    async function sendFileCore(file, replyData) {
-        if (!dc || dc.readyState !== 'open') return;
+    async function sendFileCore(file, replyData, isVoice = false) {
+        if (!dc || dc.readyState !== 'open') { sysLog("Нет соединения: файл не отправлен.", true); return; }
         if (isSendingFile) { sysLog("Дождитесь окончания текущей передачи.", true); return; }
+        if (file.size === 0) { sysLog("Файл пустой, отправка отменена.", true); return; }
         if (file.size > MAX_FILE_SIZE) { alert("Ограничение 50MB"); return; }
-        isSendingFile = true; const btnAttach = document.getElementById('btn-attach'); btnAttach.classList.add('sending');
+        const myDc = dc;
         const fileId = crypto.randomUUID(); const fileName = file.name.slice(0, 255);
-
-        dc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: fileName, size: file.size, mime: file.type, nick: sessionNickname, replyTo: replyData }));
-        renderFileMessage(fileName, file.size, 'mine', sessionNickname, `msg-${fileId}`, replyData);
-
-        const arrayBuffer = await file.arrayBuffer(); let offset = 0;
-        const sendNextChunk = () => {
-            if (!dc || dc.readyState !== 'open' || !isSendingFile) return;
-            // Во время звонка файл идёт медленнее и с малым буфером, чтобы не раздувать очередь и не ломать звук
-            const inCall = callState === 'active';
-            if (dc.bufferedAmount > (inCall ? 256 * 1024 : 8 * 1024 * 1024)) { setTimeout(sendNextChunk, 100); return; }
-            const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE); dc.send(chunk); offset += chunk.byteLength;
-            updateFileProgress(`msg-${fileId}`, Math.round((offset / file.size) * 100));
-            if (offset < file.size) setTimeout(sendNextChunk, inCall ? 15 : 5);
-            else { 
-                dc.send(JSON.stringify({ type: 'file-eof', id: fileId })); 
-                isSendingFile = false; 
-                btnAttach.classList.remove('sending'); 
-                const localUrl = URL.createObjectURL(file);
-                markFileComplete(`msg-${fileId}`, localUrl, file.type); 
-            }
+        // currentSendId = «токен» передачи: сбрасывается при обрыве/сбросе сессии, и тогда любой отложенный шаг этой
+        // передачи сам останавливается (иначе старая передача могла бы продолжить слать куски в новую сессию)
+        isSendingFile = true; currentSendId = fileId;
+        const btnAttach = document.getElementById('btn-attach'); btnAttach.classList.add('sending');
+        const fail = (why) => {
+            if (currentSendId !== fileId) return; // уже убрано обработчиком обрыва/сброса
+            currentSendId = null; isSendingFile = false;
+            btnAttach.classList.remove('sending');
+            markFileFailed(`msg-${fileId}`);
+            sysLog(why, true);
         };
-        sendNextChunk();
+        const alive = () => currentSendId === fileId && dc === myDc && myDc.readyState === 'open';
+
+        try {
+            const dims = await getImageDims(file);
+            if (!alive()) { fail("Ошибка: Передача файла прервана."); return; }
+            myDc.send(JSON.stringify({ type: 'file-meta', id: fileId, name: fileName, size: file.size, mime: file.type, voice: isVoice, w: dims ? dims.w : undefined, h: dims ? dims.h : undefined, nick: sessionNickname, replyTo: replyData }));
+            renderFileMessage(fileName, file.size, 'mine', sessionNickname, `msg-${fileId}`, replyData, file.type, dims, isVoice);
+            let localUrl = null;
+            if (PREVIEW_IMAGE_RE.test(file.type)) { // отправитель видит фото сразу, не дожидаясь конца передачи
+                localUrl = URL.createObjectURL(file); activeObjectUrls.push(localUrl);
+                attachImagePreview(`msg-${fileId}`, localUrl);
+            }
+
+            const arrayBuffer = await file.arrayBuffer(); let offset = 0;
+            const sendNextChunk = () => {
+                if (!alive()) { fail("Ошибка: Передача файла прервана."); return; }
+                try {
+                    // Во время звонка файл идёт медленнее и с малым буфером, чтобы не раздувать очередь и не ломать звук
+                    const inCall = callState === 'active';
+                    if (myDc.bufferedAmount > (inCall ? 256 * 1024 : 8 * 1024 * 1024)) { setTimeout(sendNextChunk, 100); return; }
+                    const chunk = arrayBuffer.slice(offset, offset + CHUNK_SIZE); myDc.send(chunk); offset += chunk.byteLength;
+                    updateFileProgress(`msg-${fileId}`, Math.round((offset / file.size) * 100));
+                    if (offset < file.size) setTimeout(sendNextChunk, inCall ? 15 : 5);
+                    else {
+                        myDc.send(JSON.stringify({ type: 'file-eof', id: fileId }));
+                        isSendingFile = false; currentSendId = null;
+                        btnAttach.classList.remove('sending');
+                        if (!localUrl) localUrl = URL.createObjectURL(file);
+                        markFileComplete(`msg-${fileId}`, localUrl, file.type, file);
+                    }
+                } catch (e) {
+                    console.error('mProtocol: ошибка отправки файла', e);
+                    fail("Ошибка: не удалось отправить файл.");
+                }
+            };
+            sendNextChunk();
+        } catch (e) {
+            console.error('mProtocol: ошибка подготовки файла', e);
+            fail("Ошибка: не удалось отправить файл.");
+        }
     }
 
     // --- Voice Recording Logic ---
+    const MAX_VOICE_MS = 5 * 60 * 1000; // лимит одной записи: 5 минут
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+    let isStartingRecord = false; // ждём разрешение микрофона: повторный тап не должен запускать второй захват
+    let recLimitTimer = null;
+
+    // Остановить запись и отправить её (кнопка, достижение лимита). Микрофон отпускаем сразу, чтобы не горел индикатор в браузере.
+    function finishRecording() {
+        clearTimeout(recLimitTimer); recLimitTimer = null;
+        const rec = mediaRecorder;
+        if (rec) {
+            try { if (rec.state !== 'inactive') rec.stop(); } catch(e) {}
+            try { rec.stream.getTracks().forEach(track => track.stop()); } catch(e) {}
+        }
+        isRecording = false;
+        document.getElementById('btn-voice').classList.remove('recording');
+    }
 
     async function toggleVoiceRecord() {
         const btnVoice = document.getElementById('btn-voice');
-        
+
+        if (isStartingRecord) return; // первый запрос микрофона ещё не завершён
         if (!isRecording) {
             if (callState !== 'idle') { sysLog("Голосовые сообщения недоступны во время звонка.", true); return; }
+            if (!dc || dc.readyState !== 'open') { sysLog("Нет соединения: запись недоступна.", true); return; }
+            // Идёт отправка файла — запись некуда было бы отправить (раньше она молча терялась)
+            if (isSendingFile) { sysLog("Дождитесь окончания передачи файла, затем запишите голосовое.", true); return; }
+            isStartingRecord = true;
+            const dcAtStart = dc;
+            let stream = null;
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Пока ждали разрешение, сессию могли закрыть или начаться звонок: захват не нужен, отпускаем микрофон
+                if (dc !== dcAtStart || !dc || dc.readyState !== 'open' || callState !== 'idle') {
+                    stream.getTracks().forEach(t => t.stop()); isStartingRecord = false; return;
+                }
+                const rec = new MediaRecorder(stream);
+                // Реальный формат записи зависит от браузера (Chrome — webm, Safari/iOS — mp4, Firefox — ogg);
+                // раньше всегда подписывали как webm, и Safari не мог воспроизвести
+                const baseMime = (rec.mimeType || 'audio/webm').split(';')[0].trim().toLowerCase() || 'audio/webm';
+                mediaRecorder = rec;
                 audioChunks = [];
-                
-                mediaRecorder.ondataavailable = e => { 
-                    if (e.data.size > 0) audioChunks.push(e.data); 
+
+                rec.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
                 };
-                
-                mediaRecorder.onstop = async () => {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); audioChunks = [];
-    // Создаем файл с понятным именем для отображения в цитатах
-    const fakeFile = new File([audioBlob], `Голосовое сообщение`, { type: 'audio/webm' });
-    
-    const currentReplyData = activeReply ? { id: activeReply.id, nick: activeReply.nick, text: activeReply.text } : null;
-    await sendFileCore(fakeFile, currentReplyData);
-    cancelReply();
-};
-                
-                mediaRecorder.start();
-                isRecording = true;
+
+                rec.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: baseMime }); audioChunks = [];
+                    if (mediaRecorder === rec) mediaRecorder = null;
+                    if (audioBlob.size === 0) return; // пустая запись (мгновенный стоп) — нечего отправлять
+                    // Создаем файл с понятным именем для отображения в цитатах
+                    const fakeFile = new File([audioBlob], `Голосовое сообщение`, { type: baseMime });
+
+                    const currentReplyData = activeReply ? { id: activeReply.id, nick: activeReply.nick, text: activeReply.text } : null;
+                    // Если за время записи начали отправлять файл — ждём его окончания (до минуты), а не теряем голосовое
+                    for (let i = 0; i < 600 && isSendingFile && dc === dcAtStart && dc.readyState === 'open'; i++) {
+                        await new Promise(r => setTimeout(r, 100));
+                    }
+                    if (dc !== dcAtStart || !dc || dc.readyState !== 'open') { sysLog("Голосовое не отправлено: соединение потеряно.", true); return; }
+                    await sendFileCore(fakeFile, currentReplyData, true);
+                    cancelReply();
+                };
+
+                rec.start();
+                isRecording = true; isStartingRecord = false;
                 btnVoice.classList.add('recording');
+                recLimitTimer = setTimeout(() => {
+                    recLimitTimer = null;
+                    if (mediaRecorder === rec && isRecording) {
+                        sysLog("Достигнут лимит записи (5 минут): голосовое отправлено.");
+                        finishRecording();
+                    }
+                }, MAX_VOICE_MS);
             } catch (err) {
-                sysLog("Ошибка: Нет доступа к микрофону.", true);
+                isStartingRecord = false;
+                if (stream) { try { stream.getTracks().forEach(t => t.stop()); } catch(e) {} } // MediaRecorder не создался — не оставляем микрофон включённым
+                mediaRecorder = null; audioChunks = []; isRecording = false;
+                btnVoice.classList.remove('recording');
+                console.error('mProtocol: ошибка записи голоса', err);
+                sysLog(err && (err.name === 'NotAllowedError' || err.name === 'SecurityError' || err.name === 'NotFoundError') ? "Ошибка: Нет доступа к микрофону." : "Ошибка: не удалось начать запись.", true);
             }
         } else {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-                // Отключаем микрофон, чтобы не горел индикатор в браузере
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            }
-            isRecording = false;
-            btnVoice.classList.remove('recording');
+            finishRecording();
         }
     }
 
@@ -1589,6 +2249,16 @@
         callState = 'active'; updateCallUI(); callStartTs = Date.now();
         attachRemoteAudio();
         sysLog("Звонок начался."); playCallSound('connect');
+        // Тон соединения не должен попасть в микрофон (динамики → микрофон, пока эхоподавитель не настроился): первые 450 мс
+        // микрофон не передаёт звук, затем возвращается к состоянию mute. Без звука/в mute ничего не трогаем.
+        const tone = localCallStream && localCallStream.getAudioTracks()[0];
+        if (tone && !callMuted && !isMuted) {
+            tone.enabled = false;
+            setTimeout(() => {
+                const cur = localCallStream && localCallStream.getAudioTracks()[0];
+                if (cur && callState === 'active' && callId === id) cur.enabled = !callMuted;
+            }, 450);
+        }
         acquireWakeLock();
         const t0 = localCallStream && localCallStream.getAudioTracks()[0];
         if (t0 && t0.readyState === 'ended') onMicEnded(localCallStream); // микрофон пропал ещё до начала разговора
@@ -1675,6 +2345,7 @@
                 }
                 if (callState !== 'idle') { sendCallSignal('call-decline', id, { reason: 'busy' }); return; }
                 callId = id; callState = 'incoming'; updateCallUI();
+                closeViewer(); // окно просмотра перекрывает панель звонка — иначе нельзя ответить
                 ringTimer = setTimeout(() => {
                     if (callId === id && callState === 'incoming') { sysLog("Пропущенный звонок."); resetCall(); }
                 }, CALL_RING_TIMEOUT_MS + 5000);
@@ -1907,7 +2578,7 @@
     });
 
     // --- Inputs Event Listeners ---
-    document.getElementById('join-code-input').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
+    document.getElementById('join-code-input').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); clearCodeError(); });
     
     document.getElementById('join-code-input').addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !document.getElementById('btn-join').disabled) { e.preventDefault(); joinSession(); }
