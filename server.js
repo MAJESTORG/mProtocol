@@ -1,48 +1,54 @@
 const express = require('express');
 const http = require('http');
+const crypto = require('crypto');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
 
-// Разрешаем CORS
 app.use(cors());
 
 const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-        allowedHeaders: ["*"],
-        credentials: false
-    },
-    transports: ['websocket', 'polling']
+    cors: { origin: "*", methods: ["GET", "POST"], credentials: false },
+    transports: ['websocket', 'polling'],
+    maxHttpBufferSize: 1e5 // сигналинг = только SDP/ICE, 100 КБ с запасом; защита от больших пакетов
 });
 
-// Проверка работоспособности
 app.get('/', (req, res) => {
     res.send('mProtocol Server is running');
 });
 
-// Эндпоинт для получения ICE конфигурации через REST API Metered
+// ---------- /ice-config ----------
+// Кэш ответа Metered: не дёргаем их API на каждый запрос клиента.
+// Если Metered выдаёт ключи с коротким сроком жизни — уменьшите ICE_CACHE_MS.
+const ICE_CACHE_MS = 5 * 60 * 1000;
+let iceCache = null; // { at: timestamp, iceServers: [...] }
+
 app.get('/ice-config', async (req, res) => {
     try {
+        if (iceCache && Date.now() - iceCache.at < ICE_CACHE_MS) {
+            return res.json({ iceServers: iceCache.iceServers });
+        }
+
         const apiKey = process.env.METERED_API_KEY;
-        
         if (!apiKey) {
             console.error('METERED_API_KEY is missing');
             return res.status(500).json({ error: 'API key is missing on server' });
         }
 
-        const response = await fetch(`https://mprotocol.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
-        
-        // Проверяем, что Metered ответил статусом 200 OK, а не ошибкой
+        // Требуется Node 18+ (глобальный fetch)
+        const response = await fetch(
+            `https://mprotocol.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`,
+            { signal: AbortSignal.timeout(10000) }
+        );
         if (!response.ok) {
             console.error(`Metered API Error: ${response.status} ${response.statusText}`);
-            return res.status(response.status).json({ error: 'Failed to fetch TURN credentials' });
+            return res.status(502).json({ error: 'Failed to fetch TURN credentials' });
         }
 
         const iceServers = await response.json();
+        iceCache = { at: Date.now(), iceServers };
         res.json({ iceServers });
     } catch (error) {
         console.error('Error fetching ICE config:', error);
@@ -50,44 +56,94 @@ app.get('/ice-config', async (req, res) => {
     }
 });
 
+// ---------- Комнаты ----------
+// roomId -> { host: socketId, guest: socketId | null }. Максимум 2 участника.
 const rooms = new Map();
 
+const ROOM_ID_RE = /^\d{6}$/;
+const MAX_FAILS_PER_MIN = 10; // неудачных join-room с одного IP в минуту (защита от перебора 6-значного кода)
+const failLog = new Map();    // ip -> [timestamps]
+
+function genRoomId() {
+    for (let i = 0; i < 20; i++) {
+        const id = crypto.randomInt(100000, 1000000).toString();
+        if (!rooms.has(id)) return id;
+    }
+    return null;
+}
+
+// За прокси Render реальный IP клиента лежит в x-forwarded-for
+function clientIp(socket) {
+    const xff = socket.handshake.headers['x-forwarded-for'];
+    return (typeof xff === 'string' && xff.split(',')[0].trim()) || socket.handshake.address || 'unknown';
+}
+
+function tooManyFails(ip) {
+    const now = Date.now();
+    const arr = (failLog.get(ip) || []).filter(t => now - t < 60000);
+    failLog.set(ip, arr);
+    return arr.length >= MAX_FAILS_PER_MIN;
+}
+function registerFail(ip) {
+    const arr = failLog.get(ip) || [];
+    arr.push(Date.now());
+    failLog.set(ip, arr);
+}
+// Чистим устаревшие записи, чтобы Map не рос бесконечно
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, arr] of failLog) {
+        const fresh = arr.filter(t => now - t < 60000);
+        if (fresh.length) failLog.set(ip, fresh); else failLog.delete(ip);
+    }
+}, 60000).unref();
+
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+    const ip = clientIp(socket);
 
     socket.on('create-room', () => {
-        const roomId = Math.floor(100000 + Math.random() * 900000).toString();
-        rooms.set(roomId, new Set([socket.id]));
+        if (socket.data.roomId) return; // один сокет — одна комната
+        const roomId = genRoomId();
+        if (!roomId) return socket.emit('error', 'Сервер перегружен, попробуйте позже');
+        rooms.set(roomId, { host: socket.id, guest: null });
+        socket.data.roomId = roomId;
         socket.join(roomId);
         socket.emit('room-created', roomId);
     });
 
     socket.on('join-room', (roomId) => {
-        if (rooms.has(roomId)) {
-            rooms.get(roomId).add(socket.id);
-            socket.join(roomId);
-            socket.to(roomId).emit('guest-joined');
-            socket.emit('join-success');
-        } else {
-            socket.emit('error', 'Код не найден');
+        if (socket.data.roomId) return;
+        if (tooManyFails(ip)) return socket.emit('error', 'Слишком много попыток. Подождите минуту.');
+
+        const room = (typeof roomId === 'string' && ROOM_ID_RE.test(roomId)) ? rooms.get(roomId) : null;
+        // Занятая комната отвечает так же, как несуществующая: не раскрываем, какие коды живы
+        if (!room || room.guest || room.host === socket.id) {
+            registerFail(ip);
+            return socket.emit('error', 'Код не найден');
         }
+
+        room.guest = socket.id;
+        socket.data.roomId = roomId;
+        socket.join(roomId);
+        socket.to(roomId).emit('guest-joined'); // хост начинает createOffer
+        socket.emit('join-success');
     });
 
-    socket.on('signal', ({ roomId, data }) => {
+    // Клиент шлёт { roomId, data }, но roomId от клиента игнорируем: берём комнату, в которой сокет реально состоит.
+    socket.on('signal', (payload) => {
+        const roomId = socket.data.roomId;
+        if (!roomId || !payload || typeof payload !== 'object') return;
+        const data = payload.data;
+        if (!data || typeof data !== 'object') return;
         socket.to(roomId).emit('signal', data);
     });
 
     socket.on('disconnect', () => {
-        for (const [roomId, members] of rooms.entries()) {
-            if (members.has(socket.id)) {
-                members.delete(socket.id);
-                if (members.size === 0) {
-                    rooms.delete(roomId);
-                }
-                break;
-            }
-        }
-        console.log('User disconnected:', socket.id);
+        const roomId = socket.data.roomId;
+        const room = roomId && rooms.get(roomId);
+        if (!room) return;
+        if (room.host === socket.id) rooms.delete(roomId); // хост ушёл — комната больше не нужна
+        else if (room.guest === socket.id) room.guest = null;
     });
 });
 
