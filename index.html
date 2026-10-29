@@ -1990,7 +1990,7 @@
         }
 
         if (stagedFile) {
-            if (isSendingFile) { alert("Уже идет передача файла"); return; }
+            if (isSendingFile) { sysLog("Файл ждёт: сначала должна закончиться текущая передача.", true); return; }
             const fileToSend = stagedFile;
             cancelStagedFile();
             await sendFileCore(fileToSend, currentReplyData);
@@ -2002,7 +2002,7 @@
         if (!dc || dc.readyState !== 'open') { sysLog("Нет соединения: файл не отправлен.", true); return; }
         if (isSendingFile) { sysLog("Дождитесь окончания текущей передачи.", true); return; }
         if (file.size === 0) { sysLog("Файл пустой, отправка отменена.", true); return; }
-        if (file.size > MAX_FILE_SIZE) { alert("Ограничение 50MB"); return; }
+        if (file.size > MAX_FILE_SIZE) { sysLog(`Файл больше лимита ${formatBytes(MAX_FILE_SIZE)}.`, true); return; }
         const myDc = dc;
         const fileId = crypto.randomUUID(); const fileName = file.name.slice(0, 255);
         // currentSendId = «токен» передачи: сбрасывается при обрыве/сбросе сессии, и тогда любой отложенный шаг этой
@@ -2536,45 +2536,81 @@
     document.addEventListener('pointerdown', e => { if (callPopOpen && !callPop.contains(e.target) && !document.getElementById('call-settings').contains(e.target)) closeCallPop(); }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCallPop(); });
 
-    // --- Drag & Drop / Staging UI ---
+    // --- Файлы: Ctrl+V, перетаскивание, скрепка -> stagedFile (один файл за раз) ---
+    // Папки и несколько файлов не поддерживаются: показываем подсказку. Если понадобится пакетная отправка,
+    // stagedFile нужно превратить в массив (затронет updateStagedUI, cancelStagedFile, sendMessage).
+    const GENERIC_PASTE_NAME = /^image\.\w+$/i;   // так браузер называет картинку из буфера
+
     function updateStagedUI() {
         const bar = document.getElementById('staged-file-bar'); const nameSpan = document.getElementById('staged-file-name'); const btn = document.getElementById('btn-attach');
-        if (stagedFile) { bar.classList.add('active'); nameSpan.innerText = stagedFile.name; btn.classList.add('active'); }
+        // размер идёт первым: длинное имя обрезается многоточием с конца
+        if (stagedFile) { bar.classList.add('active'); nameSpan.innerText = `${formatBytes(stagedFile.size)} · ${stagedFile.name}`; btn.classList.add('active'); }
         else { bar.classList.remove('active'); nameSpan.innerText = ''; btn.classList.remove('active'); }
     }
-    
+
     function cancelStagedFile() { stagedFile = null; document.getElementById('file-input').value = ''; updateStagedUI(); }
 
+    // Лимиты проверяем здесь, чтобы ошибка была видна сразу, а не при отправке
+    function stageFile(f, fromPaste) {
+        if (!f) return;
+        if (f.size === 0) { showToast('Файл пустой: отправлять нечего.', true); return; }
+        if (f.size > MAX_FILE_SIZE) { showToast(`Файл больше лимита ${formatBytes(MAX_FILE_SIZE)}.`, true); return; }
+        // Скриншоты приходят как «image.png»: даём уникальное имя
+        if (fromPaste && f.type.startsWith('image/') && GENERIC_PASTE_NAME.test(f.name)) {
+            const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg').replace(/[^a-z0-9]/gi, '') || 'png';
+            f = new File([f], `image-${Date.now()}.${ext}`, { type: f.type });
+        }
+        stagedFile = f; updateStagedUI();
+    }
+
+    // Вызывать СИНХРОННО из обработчика события: после его выхода DataTransfer очищается.
+    // Возвращает true, если в данных были файлы или папка (т.е. событие обработано нами).
+    function stageFromTransfer(dt, fromPaste) {
+        const items = Array.from(dt.items || []).filter(i => i.kind === 'file');
+        const hasDir = items.some(i => { try { const en = i.webkitGetAsEntry && i.webkitGetAsEntry(); return !!(en && en.isDirectory); } catch (e) { return false; } });
+        const files = (items.length ? items.map(i => i.getAsFile()) : Array.from(dt.files || [])).filter(Boolean);
+        if (!files.length && !hasDir) return false;
+        if (hasDir) { showToast('Папки отправить нельзя: заархивируйте её в ZIP.', true); return true; }
+        if (files.length > 1) showToast('Файлы уходят по одному: взят первый.');
+        const f = files[0];
+        // Браузер без Entry API отдаёт папку как нечитаемый File (обычный файл, в т.ч. пустой, читается)
+        f.slice(0, 1).arrayBuffer().then(() => stageFile(f, fromPaste), () => showToast('Не удалось прочитать файл. Если это папка, заархивируйте её в ZIP.', true));
+        return true;
+    }
+
     document.getElementById('file-input').addEventListener('change', (e) => {
-        if (e.target.files.length > 0) { stagedFile = e.target.files[0]; updateStagedUI(); }
+        const f = e.target.files[0];
+        e.target.value = '';   // иначе повторный выбор того же файла не вызовет change
+        stageFile(f, false);
     });
 
     const chatScreen = document.getElementById('screen-chat');
-    chatScreen.addEventListener('dragover', (e) => { e.preventDefault(); chatScreen.classList.add('drag-active'); });
-    chatScreen.addEventListener('dragleave', (e) => { e.preventDefault(); chatScreen.classList.remove('drag-active'); });
+    const hasFiles = (e) => !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files'));
+    // Счётчик нужен, потому что dragleave срабатывает и при заходе на вложенные элементы (подсветка мигала бы).
+    // Реагируем только на файлы: иначе перетаскивание выделенного текста в поле ввода блокировалось бы.
+    let dragDepth = 0;
+    const clearDragState = () => { dragDepth = 0; chatScreen.classList.remove('drag-active'); };
+    chatScreen.addEventListener('dragenter', (e) => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; chatScreen.classList.add('drag-active'); });
+    chatScreen.addEventListener('dragover', (e) => { if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    chatScreen.addEventListener('dragleave', (e) => { if (!hasFiles(e)) return; if (--dragDepth <= 0) clearDragState(); });
     chatScreen.addEventListener('drop', (e) => {
-        e.preventDefault(); chatScreen.classList.remove('drag-active');
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { stagedFile = e.dataTransfer.files[0]; updateStagedUI(); }
+        if (!hasFiles(e)) return;
+        e.preventDefault(); clearDragState();
+        stageFromTransfer(e.dataTransfer, false);
     });
+    // Файл, брошенный мимо чата (экран ника или кода), иначе открылся бы в этой вкладке и оборвал сессию
+    window.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+    window.addEventListener('drop', (e) => { if (hasFiles(e)) e.preventDefault(); clearDragState(); });
 
-    // Вставка картинки из буфера (Ctrl+V) -> попадает в staged, отправка как обычно (Enter)
+    // Ctrl+V: скриншоты и файлы из Проводника/Finder. Обычный текст не трогаем: вставится как раньше.
     document.addEventListener('paste', (e) => {
-        if (!chatScreen.classList.contains('active')) return;
-        const items = e.clipboardData && e.clipboardData.items;
-        if (!items) return;
-        for (const item of items) {
-            if (item.kind === 'file' && item.type.startsWith('image/')) {
-                const blob = item.getAsFile();
-                if (!blob) continue;
-                const ext = item.type.split('/')[1].replace('jpeg', 'jpg').replace(/[^a-z0-9]/gi, '') || 'png';
-                stagedFile = new File([blob], `image-${Date.now()}.${ext}`, { type: item.type });
-                updateStagedUI();
-                e.preventDefault();
-                document.getElementById('msg-input').focus();
-                return;
-            }
-        }
-        // обычный текст не трогаем — вставится как раньше
+        if (!chatScreen.classList.contains('active') || viewerEl) return;
+        const cd = e.clipboardData;
+        if (!cd) return;
+        // Word/Excel кладут в буфер текст И картинку-рендер «image.png»: тогда вставляем текст
+        const fl = Array.from(cd.files || []);
+        if (cd.getData('text/plain') && fl.length && fl.every(f => f.type.startsWith('image/') && GENERIC_PASTE_NAME.test(f.name))) return;
+        if (stageFromTransfer(cd, true)) { e.preventDefault(); document.getElementById('msg-input').focus(); }
     });
 
     // --- Inputs Event Listeners ---
