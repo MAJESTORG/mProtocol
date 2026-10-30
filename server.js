@@ -57,28 +57,11 @@ app.get('/ice-config', async (req, res) => {
 });
 
 // ---------- Комнаты ----------
-// roomId -> { host: socketId, guest: socketId | null, timer }. Максимум 2 участника.
-// Комната одноразовая: после входа гостя слот не освобождается (см. disconnect), ждать нового гостя нельзя.
+// roomId -> { host: socketId, guest: socketId | null }. Максимум 2 участника.
 const rooms = new Map();
-
-function closeRoom(roomId) {
-    const room = rooms.get(roomId);
-    if (!room) return;
-    clearTimeout(room.timer);
-    rooms.delete(roomId);
-}
 
 const ROOM_ID_RE = /^\d{6}$/;
 const MAX_FAILS_PER_MIN = 10; // неудачных join-room с одного IP в минуту (защита от перебора 6-значного кода)
-// Сколько комната ждёт гостя (по умолчанию 10 минут; переопределяется переменной окружения ROOM_TTL_MS, миллисекунды).
-// По истечении хост получает 'error' (клиент показывает тост и возвращается на главный экран),
-// а ссылка/QR в истории чата перестают работать.
-const ROOM_TTL_MS = parseInt(process.env.ROOM_TTL_MS, 10) || 10 * 60 * 1000;
-// Сколько прокси стоит перед сервером (Render добавляет свой адрес в конец X-Forwarded-For).
-// Левые записи списка подставляет сам клиент, поэтому считаем с ПРАВОГО края. Если лимит попыток срабатывает у всех сразу
-// или, наоборот, не срабатывает на перебор, включите DEBUG_XFF=1, посмотрите заголовок в логах Render и подберите TRUSTED_PROXY_HOPS.
-const TRUSTED_PROXY_HOPS = Math.max(1, parseInt(process.env.TRUSTED_PROXY_HOPS, 10) || 2);
-const DEBUG_XFF = process.env.DEBUG_XFF === '1';
 const failLog = new Map();    // ip -> [timestamps]
 
 function genRoomId() {
@@ -89,17 +72,10 @@ function genRoomId() {
     return null;
 }
 
-// За прокси Render IP клиента лежит в x-forwarded-for, но слева там могут быть записи, подставленные самим клиентом
-// (иначе лимит попыток обходится одной строкой заголовка). Берём запись, отстоящую от правого края на TRUSTED_PROXY_HOPS.
+// За прокси Render реальный IP клиента лежит в x-forwarded-for
 function clientIp(socket) {
     const xff = socket.handshake.headers['x-forwarded-for'];
-    if (DEBUG_XFF) console.log('x-forwarded-for:', xff, '| address:', socket.handshake.address);
-    if (typeof xff === 'string') {
-        const parts = xff.split(',').map(x => x.trim()).filter(Boolean);
-        // Записей меньше, чем прокси: берём самую левую (так же ведёт себя схема с одним прокси)
-        if (parts.length) return parts[Math.max(0, parts.length - TRUSTED_PROXY_HOPS)];
-    }
-    return socket.handshake.address || 'unknown';
+    return (typeof xff === 'string' && xff.split(',')[0].trim()) || socket.handshake.address || 'unknown';
 }
 
 function tooManyFails(ip) {
@@ -129,15 +105,7 @@ io.on('connection', (socket) => {
         if (socket.data.roomId) return; // один сокет — одна комната
         const roomId = genRoomId();
         if (!roomId) return socket.emit('error', 'Сервер перегружен, попробуйте позже');
-        const timer = setTimeout(() => {
-            // Гость так и не пришёл: закрываем комнату и сообщаем хосту (клиент по 'error' делает failSession)
-            const room = rooms.get(roomId);
-            if (!room || room.guest) return;
-            closeRoom(roomId);
-            socket.emit('error', 'Время ожидания истекло. Создайте сессию заново.');
-        }, ROOM_TTL_MS);
-        timer.unref();
-        rooms.set(roomId, { host: socket.id, guest: null, timer });
+        rooms.set(roomId, { host: socket.id, guest: null });
         socket.data.roomId = roomId;
         socket.join(roomId);
         socket.emit('room-created', roomId);
@@ -155,7 +123,6 @@ io.on('connection', (socket) => {
         }
 
         room.guest = socket.id;
-        clearTimeout(room.timer); // гость пришёл: TTL ожидания больше не нужен
         socket.data.roomId = roomId;
         socket.join(roomId);
         socket.to(roomId).emit('guest-joined'); // хост начинает createOffer
@@ -175,9 +142,8 @@ io.on('connection', (socket) => {
         const roomId = socket.data.roomId;
         const room = roomId && rooms.get(roomId);
         if (!room) return;
-        if (room.host === socket.id) closeRoom(roomId); // хост ушёл — комната больше не нужна
-        // Гость ушёл: слот НЕ освобождаем. Иначе ссылка из чата пустила бы постороннего, пока вкладка хоста жива.
-        // Повторить попытку можно только через новую сессию. Чтобы вернуть прежнее поведение: else if (room.guest === socket.id) room.guest = null;
+        if (room.host === socket.id) rooms.delete(roomId); // хост ушёл — комната больше не нужна
+        else if (room.guest === socket.id) room.guest = null;
     });
 });
 
