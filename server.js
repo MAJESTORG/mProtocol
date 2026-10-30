@@ -61,8 +61,6 @@ app.get('/ice-config', async (req, res) => {
 const rooms = new Map();
 
 const ROOM_ID_RE = /^\d{6}$/;
-const MAX_FAILS_PER_MIN = 10; // неудачных join-room с одного IP в минуту (защита от перебора 6-значного кода)
-const failLog = new Map();    // ip -> [timestamps]
 
 function genRoomId() {
     for (let i = 0; i < 20; i++) {
@@ -72,35 +70,7 @@ function genRoomId() {
     return null;
 }
 
-// За прокси Render реальный IP клиента лежит в x-forwarded-for
-function clientIp(socket) {
-    const xff = socket.handshake.headers['x-forwarded-for'];
-    return (typeof xff === 'string' && xff.split(',')[0].trim()) || socket.handshake.address || 'unknown';
-}
-
-function tooManyFails(ip) {
-    const now = Date.now();
-    const arr = (failLog.get(ip) || []).filter(t => now - t < 60000);
-    failLog.set(ip, arr);
-    return arr.length >= MAX_FAILS_PER_MIN;
-}
-function registerFail(ip) {
-    const arr = failLog.get(ip) || [];
-    arr.push(Date.now());
-    failLog.set(ip, arr);
-}
-// Чистим устаревшие записи, чтобы Map не рос бесконечно
-setInterval(() => {
-    const now = Date.now();
-    for (const [ip, arr] of failLog) {
-        const fresh = arr.filter(t => now - t < 60000);
-        if (fresh.length) failLog.set(ip, fresh); else failLog.delete(ip);
-    }
-}, 60000).unref();
-
 io.on('connection', (socket) => {
-    const ip = clientIp(socket);
-
     socket.on('create-room', () => {
         if (socket.data.roomId) return; // один сокет — одна комната
         const roomId = genRoomId();
@@ -113,12 +83,10 @@ io.on('connection', (socket) => {
 
     socket.on('join-room', (roomId) => {
         if (socket.data.roomId) return;
-        if (tooManyFails(ip)) return socket.emit('error', 'Слишком много попыток. Подождите минуту.');
 
         const room = (typeof roomId === 'string' && ROOM_ID_RE.test(roomId)) ? rooms.get(roomId) : null;
         // Занятая комната отвечает так же, как несуществующая: не раскрываем, какие коды живы
         if (!room || room.guest || room.host === socket.id) {
-            registerFail(ip);
             return socket.emit('error', 'Код не найден');
         }
 
