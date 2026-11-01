@@ -97,7 +97,7 @@ io.on('connection', (socket) => {
         socket.emit('join-success');
     });
 
-    // Клиент шлёт { roomId, data }, но roomId от клиента игнорируем: берём комнату, в которой сокет реально состоит.
+    // Клиент шлёт { roomId, data }, но roomId от клиента игнорируем
     socket.on('signal', (payload) => {
         const roomId = socket.data.roomId;
         if (!roomId || !payload || typeof payload !== 'object') return;
