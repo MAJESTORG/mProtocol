@@ -1,6 +1,6 @@
 # 🔗 [mProtocol](https://majestorg.github.io/mProtocol/)
-> [!IMPORTANT] 
-> Вышел [Release v2.5](https://github.com/MAJESTORG/mProtocol/releases/tag/Release_v2.5)
+> [!WARNING]
+> Из России сервис сейчас работает только через VPN: сигнальный сервер на Render.com вероятно заблокирован по IP.
 
 ---
 
@@ -11,9 +11,7 @@
       <h2>⚡ О проекте</h2>
       <p><b>mProtocol</b> — это приватный веб-мессенджер, построенный на технологии WebRTC.</p>
       <p align="left">
-        <img src="https://img.shields.io/badge/Version-2.5-success" alt="Status"> 
-        <img src="https://img.shields.io/badge/Status-Stable-blue" alt="Architecture">
-        <img src="https://img.shields.io/badge/Tech-WebRTC-orange" alt="Security">
+        <img src="https://img.shields.io/badge/Версия-2.5-success" alt="Status"> 
       </p>
     </td>
     <td width="50%" rowspan="2" align="center" valign="middle">
@@ -30,7 +28,7 @@
         <tr><td><b>Protocol</b></td><td><code>WebRTC</code></td></tr>
         <tr><td><b>Signaling</b></td><td><code>Render.com</code></td></tr>
         <tr><td><b>STUN</b></td><td><code>OpenRelay STUN</code></td></tr>
-        <tr><td><b>TURN</b></td><td><code>Private OpenRelay TURN</code></td></tr>
+        <tr><td><b>TURN</b></td><td><code>Metered TURN</code></td></tr>
       </table>
     </td>
   </tr>
@@ -43,19 +41,18 @@
 > [!NOTE]
 >* **Zero-Server Storage**: Сообщения передаются напрямую между браузерами. Данные не сохраняются на сервере и не записываются в базу данных.
 
-* **P2P Data Channel**: Прямой канал передачи данных между браузерами.
+* **P2P Канал связи**: Прямой канал передачи данных между браузерами.
 * **Signal Isolation**: Сигнальный сокет автоматически отключается после установки P2P-моста.
-* **Latency Monitoring**: Встроенный счетчик задержки соединения в реальном времени.
-* **Session Security**: Доступ по временному **6-значному коду**, который генерируется "на лету".
+* **Мониторинг задержки**: Встроенный счетчик задержки соединения в реальном времени.
+* **Безопасность сессии**: Доступ по временному **6-значному коду**, который генерируется "на лету".
 
 ---
 
-## 📂 Развертывание и Безопасность
+## 📂 Развертывание
 
-- [x] **Standalone**: Проект реализован как **Single-File Application** (HTML/JS/CSS).
-- [x] **Simple Deployment**: Хостинг фронтенда на GitHub Pages.
-- [x] **Encryption**: Весь трафик зашифрован "из коробки" стеком WebRTC (DTLS/SRTP).
-- [x] **Quick Access**: 🚀 **[Открыть mProtocol](https://majestorg.github.io/mProtocol/)**
+- [x] **Простой запуск**: Хостинг фронтенда на GitHub Pages.
+- [x] **Шифрование**: Весь трафик зашифрован стеком WebRTC (DTLS/SRTP).
+- [x] **Быстрый доступ**: 🚀 **[Открыть mProtocol](https://majestorg.github.io/mProtocol/)**
 
 ---
 
